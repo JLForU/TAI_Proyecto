@@ -1,0 +1,19 @@
+sequenceDiagram
+  participant S as Traffic Sensor
+  participant C as Sentinel Core
+  participant P as Prometheus
+  participant A as Alertmanager
+  participant G as Grafana
+  participant R as Receptor configurado
+  S->>C: POST agregado IP/ARP :8080
+  C->>C: Actualiza agregados e indicadores de condición
+  P->>C: GET /metrics :9108 (scrape pull)
+  P->>P: Evalúa PrometheusRule y estado de regla
+  G->>P: Consulta series mediante PromQL
+  alt Condición supera el criterio
+    P->>A: Envía alerta
+    A->>A: Agrupa, silencia y enruta
+    A-->>R: Notifica si existe receptor configurado
+  else Condición normal
+    Note over P,A: No se emite notificación activa
+  end

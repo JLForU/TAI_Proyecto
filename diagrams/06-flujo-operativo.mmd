@@ -1,0 +1,35 @@
+flowchart TD
+  subgraph DISC[Descubrimiento de inventario]
+    CRON[CronJob / Job]
+    NMAP[ARP / ICMP / Nmap -sT -sV --version-light -p allowlist -oX -]
+    OBS[Observaciones por ciclo]
+    CRON --> NMAP --> OBS
+  end
+  subgraph TRAF[Observación de tráfico]
+    FEED[Feed mirror / TAP / PCAP]
+    PARSE[Parser IP / ARP]
+    AGG[Agregados bytes/s y mensajes ARP/s]
+    FEED --> PARSE --> AGG
+  end
+  subgraph CORE[Core e inventario]
+    API[API de ingesta]
+    DB[(SQLite / PVC)]
+    DIFF[Comparación temporal]
+    COND[Condiciones deterministas]
+    METRICS[/metrics]
+    OBS --> API
+    AGG --> API
+    API --> DB
+    DB --> DIFF
+    API --> COND
+    DIFF --> COND
+    COND --> METRICS
+  end
+  PROM[Prometheus · scrape GET]
+  AM[Alertmanager]
+  GRAF[Grafana]
+  EXPORT[Exportación CSV / JSON desde Core]
+  PROM -->|HTTP GET /metrics · scrape pull| METRICS
+  PROM --> AM
+  PROM --> GRAF
+  DB --> EXPORT

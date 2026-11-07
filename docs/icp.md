@@ -1,145 +1,88 @@
 # Ideal Customer Profile — Sentinel
 
-> El ICP se deriva del PVB, la definición funcional actual y la investigación de dominio. Es una hipótesis falsable, no una descripción de un cliente ya validado.
->
-> Fecha: 2026-09-21.
+**Fecha:** 2026-11-05  
+**Estado:** hipótesis inicial; no validada mediante entrevistas.
 
 ## ICP — segmento beachhead
 
-### Empresas / organizaciones
+Organización o laboratorio que administra una red local de aproximadamente **10–50 activos** `[INTERNO]`, tiene una persona o pequeño equipo responsable de TI/redes/ciberseguridad y necesita inventario observable y alertas básicas, con despliegue self-hosted.
 
-Organizaciones con una red local o privada administrable, que tengan aproximadamente **10–50 activos** dentro del alcance inicial y un equipo o responsable formal de ciberseguridad.
+### Condiciones técnicas
 
-El cliente debe poder instalar software dentro de su propia infraestructura y aceptar un modelo **self-hosted**. `[INTERNO]`
+- Tiene autorización sobre la red que se va a observar.
+- Puede definir rangos IP, horarios y límites de sondeo.
+- Puede proporcionar un segmento de captura mediante bridge de laboratorio, TAP o SPAN, o acepta empezar con descubrimiento activo limitado.
+- Puede operar un clúster Kubernetes de laboratorio o acepta que esa exigencia proviene del alcance académico, no de una necesidad demostrada del usuario.
+- Acepta que el SO pueda quedar como inferido/desconocido sin acceso autenticado al endpoint.
 
-### Geografía inicial
+### Firmographics por validar
 
-**Sin restricción geográfica inicial.** `[INTERNO]`
-
-El repositorio debe poder desplegarse en la red del cliente, por lo que la variable crítica no es el país sino la capacidad técnica y las restricciones de operación local.
-
-### Sectores
-
-No se fija todavía un sector vertical único. `[INTERNO]`
-
-Como hipótesis inicial, el producto puede probarse en organizaciones que:
-
-- administren una red privada con un número limitado de activos;
-- tengan necesidad de visibilidad operativa;
-- cuenten con al menos un responsable de seguridad o infraestructura;
-- puedan ejecutar una instalación Kubernetes local.
-
-La verticalización debe decidirse después de entrevistas o pilotos; no existe evidencia suficiente todavía para afirmar que un sector concreto presenta mayor disposición de pago.
-
-### Las tres señales de calificación
-
-**Señal 1 — Alcance técnico**
-- Entre 10 y 50 activos aproximadamente.
-- Los activos están dentro de una red administrable por el cliente.
-
-**Señal 2 — Necesidad operacional**
-- El equipo quiere conocer cambios en IP, MAC, SO, puertos, servicios y tráfico.
-- Existe una necesidad real de ejecutar periódicamente tareas de descubrimiento y monitoreo.
-
-**Señal 3 — Condición de despliegue**
-- El cliente acepta una solución self-hosted.
-- Tiene capacidad para ejecutar y mantener un entorno Kubernetes o cuenta con personal técnico que pueda hacerlo.
-
-### Fuera del ICP (explícitamente)
-
-- Organizaciones que exigen una solución SaaS y no aceptan self-hosted.
-- Redes con un alcance muy superior a 50 activos para el MVP.
-- Organizaciones que buscan detección avanzada de amenazas, EDR, SIEM completo o XDR como objetivo principal.
-- Clientes que requieren que el agente modifique directamente los endpoints.
-- Entornos donde no sea posible ejecutar scripts autorizados o acceder a los recursos locales necesarios.
-- Organizaciones sin capacidad para mantener la infraestructura de despliegue. `[INTERNO]`
+- País/ciudad: TBD.
+- Sector: TBD.
+- Tamaño de la organización: TBD.
+- Tamaño del equipo de TI/ciberseguridad: TBD.
+- Presupuesto anual para monitoreo: TBD.
+- Requisitos regulatorios: TBD.
 
 ## Buyer personas
 
-### Persona 1 — Responsable / líder de ciberseguridad (decisor y veto)
+### 1. Responsable de infraestructura, redes o ciberseguridad
 
-**Objetivo:** mantener visibilidad sobre los activos y reducir tareas operativas repetitivas.
+**Rol:** decisor técnico y principal veto de confianza.  
+**Necesita:** visibilidad básica, trazabilidad, control del alcance de sondeo y certeza de que el sistema no modifica activos.  
+**Veto:** permisos excesivos, impacto sobre la red, captura no autorizada o alertas ruidosas.
 
-**Necesidades:**
-- evidencia de cambios;
-- control de quién ejecuta operaciones;
-- trazabilidad de acciones;
-- despliegue dentro de la infraestructura propia.
+### 2. Analista de red / ciberseguridad
 
-**Veto de confianza:** alto.
+**Rol:** usuario principal.  
+**Necesita:** ver activos, cambios de IP/MAC, puertos/servicios, tendencias de tráfico, logs y alertas.  
+**Frustración hipotética:** scripts inconexos y evidencia que no queda centralizada.
 
-El responsable de seguridad debe poder decidir qué herramientas y acciones puede ejecutar el agente. `[INTERNO]`
+### 3. Administrador de sistemas
 
-### Persona 2 — Analista o ingeniero de ciberseguridad (usuario principal)
+**Rol:** colaborador técnico.  
+**Necesita:** operar la plataforma, actualizar contenedores, gestionar el clúster y revisar errores de captura/sondeo.  
+**Veto:** sobrecarga de recursos o dependencias difíciles de mantener.
 
-**Objetivo:** ejecutar de manera consistente descubrimiento, monitoreo y tareas operativas sobre el entorno.
+## Pains hipotéticos
 
-**Necesidades:**
-- simplificar tareas repetitivas;
-- consultar el estado de Kubernetes;
-- lanzar herramientas y scripts con parámetros correctos;
-- recuperar operaciones fallidas;
-- revisar evidencia de ejecución.
+- Inventario de activos desactualizado.
+- Dificultad para relacionar cambios de IP/MAC, puertos o servicios con una marca temporal.
+- Ausencia de un registro simple de variaciones de tráfico.
+- Recolección y visualización dispersa entre scripts y herramientas.
 
-**Problema principal:**
-- detectar cambios en activos sin tener que repetir manualmente toda la secuencia operacional.
+## Triggers
 
-### Persona 3 — Administrador de infraestructura / redes (usuario colaborador)
-
-**Objetivo:** asegurar que Kubernetes, red, scripts y componentes de monitorización funcionen de manera estable.
-
-**Necesidades:**
-- configuración reproducible;
-- despliegue self-hosted;
-- control de recursos Kubernetes;
-- capacidad de diagnosticar fallos de Pods y Jobs.
-
-**Rol:** colaborador técnico; no necesariamente comprador.
-
-## Pains
-
-### Operativos
-
-- No siempre existe una forma centralizada y repetible de observar los cambios de los activos.
-- Ejecutar periódicamente múltiples scripts y comprobaciones puede requerir intervención manual.
-- Mantener la consistencia de parámetros entre tareas puede generar errores humanos.
-- Recuperar una operación fallida exige revisar logs y repetir comandos.
-- Las herramientas existentes pueden tener mucha más amplitud de la necesaria para un entorno pequeño.
-
-### Estratégicos
-
-- Las organizaciones pueden querer una solución self-hosted para mantener los datos dentro de su infraestructura.
-- El equipo puede querer introducir IA en operaciones sin otorgarle capacidad de intervención directa sobre endpoints.
-- El cliente puede necesitar trazabilidad para demostrar qué hizo la herramienta y con qué parámetros. `[INTERNO]`
-
-## Deseos
-
-- Tener una vista operativa de los activos y su comportamiento.
-- Registrar cambios importantes en el estado monitoreado.
-- Ejecutar tareas repetitivas mediante un flujo controlado.
-- Poder detener o aprobar cada etapa.
-- Evitar que el agente pueda modificar directamente los activos.
-- Desplegar el sistema en la infraestructura local.
-- Poder ampliar el sistema en el futuro para reconocer nuevos activos y asignarles monitoreo automáticamente. `[INTERNO]`
-
-## Triggers de compra
-
-- Aumento de incidentes relacionados con cambios no documentados en activos.
-- Necesidad de una instalación local por restricciones de datos o política.
-- Equipo pequeño de ciberseguridad con tareas manuales repetitivas.
-- Requerimiento de estandarizar scripts y procedimientos de monitoreo.
-- Interés de la organización en experimentar con agentes de IA bajo permisos muy restringidos. `[INTERNO]`
+- Auditoría o revisión de inventario.
+- Red de laboratorio que crece o cambia.
+- Necesidad de demostrar un cambio observable durante una prueba de seguridad.
+- Necesidad de centralizar métricas y alertas básicas.
 
 ## Objeciones probables
 
-| Objeción | Respuesta que debe demostrar el producto |
-|---|---|
-| "Ya tengo Zabbix/Wazuh/Nagios." | Sentinel no debe prometer reemplazarlos; debe demostrar una diferencia operacional concreta en la orquestación. |
-| "Esto lo puedo hacer con scripts y cron." | Debe medirse el tiempo y la tasa de error con y sin agente. |
-| "No quiero que una IA toque mi infraestructura." | El agente no puede ejecutar acciones directamente sobre los activos; solo usa Kubernetes y herramientas autorizadas. |
-| "No quiero enviar datos de mi red a un proveedor externo." | El despliegue es self-hosted y debe definirse una estrategia de modelo local o de manejo explícito de datos. `[VERIFICAR]` |
-| "Kubernetes es demasiado complejo para 10–50 activos." | El producto debe reducir la complejidad de despliegue mediante Helm y documentación reproducible. |
-| "Necesito detección de ataques, no solo cambios." | Eso está fuera del alcance del MVP. Sentinel es un sistema de monitoreo; la detección avanzada requeriría otro alcance. |
-| "¿Puede detectar dispositivos nuevos automáticamente?" | No en el MVP. Es una funcionalidad futura del roadmap. |
+- “Ya tenemos Zabbix/LibreNMS/Nagios”.
+- “Grafana y Prometheus ya resuelven nuestros dashboards”.
+- “No quiero que un sensor necesite privilegios de administrador”.
+- “Sin acceso autenticado no me puedes decir exactamente qué SO o software corre”.
+- “Kubernetes agrega complejidad para una red pequeña”.
+- “No necesito otro producto; con un script basta”.
 
-*Material de referencia — Tópicos Especiales en Informática*
+## Criterios de calificación
+
+1. La organización controla legal y técnicamente la red.
+2. Tiene necesidad explícita de inventario y trazabilidad de eventos.
+3. Acepta límites de descubrimiento por red.
+4. Puede operar o está dispuesta a evaluar Kubernetes.
+5. Tiene un criterio para decidir si Sentinel aporta más que las herramientas actuales.
+
+## Fuera del ICP
+
+- Redes públicas o rangos de terceros sin autorización.
+- Organizaciones que requieren respuesta automática, contención o remediación.
+- Entornos que exigen inventario exhaustivo de software instalado o vulnerabilidades por endpoint.
+- Redes de producción donde no se autorice captura/sondeo o no exista una fuente de tráfico.
+- Organizaciones que necesitan un SIEM/NDR de nivel empresarial como reemplazo de sus plataformas actuales.
+
+## Unknowns
+
+Disposición a pagar, sectores, geografía inicial, madurez Kubernetes real, volumen de tráfico, número de redes/sensores, retención, canales de alerta y precisión mínima exigida.

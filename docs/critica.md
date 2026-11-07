@@ -1,212 +1,71 @@
-# Investigación de crítica — Sentinel
+# Investigación crítica — Sentinel
 
-> **Este documento no intenta defender Sentinel.** Su propósito es encontrar las razones por las que podría fracasar, quedar comoditizado o no justificar el uso de IA.
->
-> Fecha de investigación: 2026-09-21.  
-> Toda evidencia externa está enlazada; las hipótesis propias se marcan `[INTERNO]`.
+**Propósito:** intentar refutar la utilidad del proyecto antes de invertir tiempo en su construcción.  
+**Fecha:** 2026-11-05
 
 ## TL;DR — por qué Sentinel podría fracasar
 
-1. **La monitorización que Sentinel ofrece ya es una categoría madura.** Zabbix, Nagios, SolarWinds y Wazuh ya monitorizan infraestructura, redes, servicios, cambios y/o tráfico.
-2. **El componente IA puede ser innecesario para el MVP.** El descubrimiento y monitoreo pueden ejecutarse con scripts deterministas; si el agente solo selecciona herramientas y parámetros, el valor adicional debe demostrarse con mediciones.
-3. **El "control humano" no es suficiente como diferenciador.** Es una propiedad de gobernanza y seguridad, pero no constituye por sí sola un moat.
-4. **El MVP no resuelve todavía uno de los dos problemas declarados.** La incorporación automática de nuevos activos queda fuera del MVP; por tanto, la opción 4 del problema es una oportunidad futura, no una capacidad actualmente demostrada.
-5. **Self-hosted tampoco es un diferenciador único.** Nagios XI y otros productos comerciales ya soportan despliegues dentro de infraestructura controlada por el cliente.
-6. **El riesgo más serio es de utilidad, no de tecnología.** Una organización con 10–50 activos puede resolver gran parte del problema con herramientas existentes y scripts propios.
-7. **El agente tiene un límite operativo importante y deliberado:** no puede actuar directamente sobre los activos. Esto reduce el riesgo, pero también limita el valor de automatización que puede capturarse.
+1. El descubrimiento y monitoreo de red ya están resueltos por productos maduros y gratuitos.
+2. Un conjunto de scripts Python, Prometheus y Grafana puede ser suficiente; una plataforma adicional quizá no aporte valor.
+3. Kubernetes puede imponer más complejidad que la que elimina para una red pequeña.
+4. Sin software residente, el inventario de SO/servicios es parcial y probabilístico.
+5. La captura de tráfico requiere acceso real a la red; Kubernetes no proporciona esa visibilidad por defecto.
+6. Las alertas por umbrales o cambios ARP pueden ser ruidosas y no demuestran que exista un ataque.
+7. El sensor podría requerir privilegios Linux de captura que amplían la superficie de ataque.
+8. La propuesta no tiene una ventaja competitiva demostrada ni evidencia de disposición a pagar.
+9. El alcance acotado puede no cubrir necesidades de operación reales fuera del laboratorio.
 
-## 1. Comoditización: el problema ya tiene muchas soluciones
+## 1. Comoditización
 
-La observación periódica de dispositivos, la comparación contra valores esperados, los umbrales y los dashboards no son innovaciones nuevas.
+Zabbix ofrece descubrimiento de red por rangos IP y disponibilidad de servicios/SNMP. LibreNMS ofrece autodescubrimiento, incluyendo ARP y SNMP. Nagios XI ofrece checks y umbrales. Prometheus/Grafana resuelven buena parte de la observabilidad. Sentinel debe explicar por qué su integración es preferible para un usuario concreto.
 
-Zabbix se presenta como plataforma de monitoreo empresarial de código abierto para redes e infraestructura, con almacenamiento histórico, visualización y automatización de respuestas.
+## 2. ¿Por qué no scripts?
 
-Fuente:
-https://www.zabbix.com/documentation/current/es/manual/introduction
+El MVP puede reducirse a cuatro procesos: sondear rangos permitidos, recibir/capturar tráfico, persistir resultados y evaluar reglas. Si el esfuerzo de operar Sentinel es mayor que ejecutar esos procesos con cron y dashboards existentes, el producto no aporta suficiente valor.
 
-Nagios XI ejecuta plugins sobre hosts y servicios a intervalos definidos, compara resultados con rangos de advertencia/críticos, registra resultados y notifica.
+**Experimento:** construir un flujo equivalente con scripts independientes y comparar tiempo de instalación, ejecución, mantenimiento y consulta de evidencia.
 
-Fuente:
-https://www.nagios.com/products/nagios-xi/
+## 3. El coste oculto de Kubernetes
 
-SolarWinds NPM monitoriza disponibilidad, tráfico, rendimiento, métricas de red, descubrimiento de dispositivos y líneas base históricas.
+Kubernetes tiene sentido como requisito de arquitectura y despliegue cloud-native, pero no se ha demostrado que un equipo con 10–50 activos lo prefiera a una VM o a una instalación simple. La arquitectura debe mantener pocos workloads y no fragmentar el producto en microservicios innecesarios.
 
-Fuente:
-https://www.solarwinds.com/network-performance-monitor
+## 4. Cobertura de descubrimiento limitada
 
-Wazuh, mediante monitoreo agentless, puede conectarse por SSH, supervisar archivos/configuraciones y ejecutar comandos periódicamente; cuando cambia la salida monitorizada, puede generar una alerta.
+Nmap puede inferir SO y servicios desde respuestas de red; no equivale a un inventario completo del endpoint. La identificación de servicios mediante `-sV --version-light` envía sondas activas a los puertos abiertos y puede no obtener una respuesta concluyente; una coincidencia basada solo en el número de puerto debe marcarse como probable. La identificación de la familia de SO puede fallar o resultar ambigua. No instalar software residente reduce intrusión y carga, pero también reduce información.
 
-Fuente:
-https://documentation.wazuh.com/current/user-manual/capabilities/agentless-monitoring/how-it-works.html
+## 5. Visibilidad de red
 
-**Implicación crítica:** Sentinel no puede vender "monitorización continua de activos" como novedad. Su posible diferenciación debe estar en la forma concreta de orquestar operaciones y desplegar los componentes.
+Una aplicación dentro de un Pod no recibe automáticamente paquetes de la LAN física. La solución necesita bridge, interfaz dedicada, TAP/SPAN o un sensor externo que remita metadatos. Si el laboratorio no puede proporcionar esa entrada, la función de tráfico no está construida aunque Grafana y Prometheus estén funcionando.
 
-## 2. El riesgo base de la categoría: IA sobre automatización determinista
+## 6. Alertas no equivalen a detección de amenazas
 
-El proyecto declara que la IA es principalmente un orquestador operacional.
+Un umbral de bytes/s indica que se superó un valor. Un cambio de asociación IP↔MAC indica que el sensor observó una asociación diferente. Ambas condiciones pueden tener causas legítimas. El producto no debe etiquetarlas como DDoS o ARP spoofing confirmado.
 
-Eso crea una prueba de valor muy concreta:
+## 7. Riesgo de permisos
 
-> ¿El agente ahorra suficiente trabajo operativo como para justificar su complejidad y coste frente a una secuencia equivalente de scripts?
+La captura puede requerir capabilities Linux o una modalidad de red más amplia. El RBAC de Kubernetes no reemplaza las capabilities del sistema operativo. Un diseño que resuelva el problema mediante `privileged: true`, `hostPID` y montaje de `/` sería inaceptable para este alcance.
 
-En el MVP:
+## 8. Falsos positivos y ruido
 
-- consultar Kubernetes: sí;
-- ejecutar descubrimiento: sí;
-- ejecutar monitoreo: sí;
-- crear/eliminar Pods: sí;
-- modificar configuración: sí;
-- ejecutar acción después de aprobación: sí;
-- reintentar operaciones fallidas: sí;
-- comparar baseline directamente como capacidad del agente: no;
-- consultar Grafana directamente: no;
-- detectar nuevos activos: no;
-- proponer acciones: no.
+Una línea base de cinco muestras de cinco segundos puede ser útil para una demostración breve, pero no caracteriza la variación diaria de una red. Debe presentarse como baseline de laboratorio, calcularse con un método explícito y evaluarse frente a tráfico normal representativo.
 
-La arquitectura resultante hace que la **lógica de monitoreo siga siendo determinista y externa al modelo**. `[INTERNO]`
+## 9. Ventaja competitiva
 
-Eso es bueno para reproducibilidad, pero deja abierta la pregunta más difícil: **¿qué parte de ese trabajo sería imposible o materialmente peor sin IA?** `[VERIFICAR]`
+La etiqueta “read-only” no constituye una ventaja exclusiva. Los sistemas de monitoreo también ofrecen permisos de lectura, reglas y alertas. La confianza es un requisito de diseño, no una ventaja competitiva probada.
 
-## 3. La limitación de diseño no es un diferenciador por sí misma
+## 10. Riesgo de alcance
 
-Sentinel establece una frontera de seguridad clara:
+El producto puede quedarse corto si el usuario necesita inventario exhaustivo, correlación entre subredes, retención prolongada, notificaciones integradas o análisis de protocolos más amplios. Agregar esas capacidades aumenta el costo y puede desbordar el MVP.
 
-> El agente nunca puede ejecutar acciones directamente sobre los activos; solo puede interactuar con Kubernetes y herramientas autorizadas.
+## Veredicto
 
-Esta decisión reduce la superficie de impacto de un error del modelo y facilita aplicar RBAC, allowlists y aislamiento en el plano de orquestación.
+**Como prototipo técnico:** el recorte es construible y permite demostrar descubrimiento, monitoreo, Kubernetes, Helm, seguridad y observabilidad.  
+**Como producto comercial:** no hay diferenciación suficiente ni validación de demanda.  
+**Como herramienta de laboratorio:** su utilidad depende de que la topología, la fuente de tráfico y los casos de prueba sean reproducibles.
 
-Pero la restricción no es, por sí sola, una innovación. La necesidad de limitar permisos y mantener controles de acceso ya es una práctica central en Kubernetes y en herramientas de seguridad.
+## Hipótesis que deben probarse
 
-**Lo que podría diferenciar a Sentinel** es la combinación de:
-
-- agente restringido;
-- herramientas predefinidas;
-- secuenciación operacional;
-- reintentos acotados;
-- despliegue self-hosted;
-- trazabilidad de lo que el agente ejecutó.
-
-Incluso esta combinación debe medirse; no debe asumirse como moat.
-
-## 4. El moat, examinado en frío
-
-El PVB identifica confianza/control humano como ventaja competitiva primaria.
-
-La crítica es que **control no es un activo acumulativo automáticamente**.
-
-Un competidor podría implementar:
-
-- RBAC;
-- allowlists de herramientas;
-- un agente con tool-calling;
-- registros de ejecución;
-- aprobaciones humanas;
-- ejecución sobre la API de Kubernetes.
-
-La implementación técnica es replicable.
-
-El posible activo acumulativo de Sentinel sería más estrecho:
-
-- historial de ejecuciones y fallos;
-- datos de qué herramientas, parámetros y reintentos funcionan;
-- recetas operativas validadas;
-- evidencia de reducción de trabajo humano.
-
-Pero eso todavía no constituye un moat demostrado. `[VERIFICAR]`
-
-## 5. El fracaso más probable no es técnico: es la irrelevancia
-
-El escenario peligroso no necesita una catástrofe.
-
-Puede suceder algo más simple:
-
-1. El equipo instala Sentinel.
-2. Los scripts funcionan.
-3. Kubernetes crea los Pods correctamente.
-4. El agente también funciona.
-5. Pero el equipo concluye que podía ejecutar los mismos scripts con cron, una herramienta de monitoreo existente y unos pocos comandos de `kubectl`.
-
-En ese escenario, el sistema técnicamente funciona, pero el producto no tiene suficiente valor adicional.
-
-**Métrica que debe existir:** tiempo total de una tarea operacional con Sentinel frente al mismo flujo sin agente.
-
-## 6. El producto puede ser parte del problema que dice resolver
-
-Las herramientas maduras ya reducen parte del trabajo mediante dashboards, alertas, detección de cambios, discovery y automatización.
-
-Por ejemplo, SolarWinds NPM afirma realizar descubrimiento automático de dispositivos y monitoreo continuo de métricas; Wazuh agentless permite comandos periódicos y detectar cambios.
-
-Fuentes:
-- https://www.solarwinds.com/network-performance-monitor
-- https://documentation.wazuh.com/current/user-manual/capabilities/agentless-monitoring/how-it-works.html
-
-Por eso Sentinel debe demostrar que **no añade otra capa de operación que el administrador tenga que mantener**.
-
-La complejidad adicional incluye:
-
-- Kubernetes;
-- Helm;
-- scripts;
-- agente;
-- permisos;
-- configuración;
-- logs del propio agente.
-
-La carga operativa de Sentinel debe medirse como parte de la evaluación.
-
-## 7. Riesgo de seguridad que el propio diseño no elimina
-
-El modelo no tiene acceso directo a los activos, pero sí recibe datos operativos y tiene acceso al plano Kubernetes.
-
-Eso crea otros vectores:
-
-- uso incorrecto de la API de Kubernetes;
-- permisos excesivos del ServiceAccount;
-- modificación indebida de configuraciones;
-- uso de una herramienta autorizada con parámetros incorrectos;
-- manipulación de datos consumidos por el agente;
-- fuga de información del entorno en consultas a un proveedor externo de IA.
-
-La arquitectura propuesta reduce el impacto porque el agente no actúa directamente sobre los endpoints, pero **no elimina el riesgo de una acción incorrecta dentro de Kubernetes**.
-
-Mitigaciones a evaluar:
-
-- RBAC de mínimo privilegio;
-- ServiceAccount dedicado;
-- herramientas allowlisted;
-- parámetros validados;
-- aislamiento por namespace;
-- secretos fuera del prompt;
-- registro de cada llamada a herramienta;
-- modelo self-hosted o política explícita de no enviar información sensible a proveedores externos.
-
-## 8. Qué cambiaría del PVB
-
-1. No presentar "monitoreo" como diferenciador central.
-2. Presentar el agente como **orquestador de herramientas**, no como detector inteligente de amenazas.
-3. Hacer explícito que la comparación de baseline pertenece al mecanismo determinista de monitoreo y no al LLM.
-4. Marcar la detección automática de nuevos activos como **roadmap**, no como capacidad actual.
-5. Medir el tiempo de ejecución de tareas con agente frente a tareas sin agente.
-6. Medir la tasa de fallos recuperables y el costo de los reintentos.
-7. Mantener la restricción de no intervenir directamente sobre activos como requisito de seguridad del MVP.
-8. No afirmar un moat antes de acumular evidencia operacional.
-
-## 9. Veredicto
-
-El proyecto tiene coherencia técnica como **plataforma self-hosted de monitoreo + orquestación operacional sobre Kubernetes**, pero su principal hipótesis de valor todavía no está demostrada:
-
-> **La incertidumbre crítica no es si puede construirse, sino si la capa de agente de IA aporta una mejora operacional suficientemente medible frente a scripts y plataformas de monitoreo maduras.** `[INTERNO]`
-
-La demostración debe concentrarse en esa pregunta.
-
-## 10. Afirmaciones que deben evitarse o permanecer como hipótesis
-
-- "Sentinel detecta ataques." → **No**. El MVP detecta cambios en las variables monitorizadas.
-- "Sentinel detecta anomalías mediante IA." → **No**.
-- "Sentinel incorpora automáticamente nuevos activos." → **No en el MVP**; funcionalidad futura.
-- "La IA compara el baseline." → **No**; la comparación debe pertenecer al mecanismo determinista de monitoreo.
-- "Control humano = moat." → **No demostrado**.
-- "10–50 activos es un mercado validado." → **No demostrado**.
-- "La IA reduce costos operativos." → **No demostrado** hasta medir un flujo equivalente con y sin agente.
-
-*Material de referencia — Tópicos Especiales en Informática*
+- `[INTERNO]` La integración ahorra trabajo respecto de scripts separados.
+- `[VERIFICAR]` El sensor puede obtener el tráfico requerido con permisos aceptables.
+- `[VERIFICAR]` La cobertura de descubrimiento es suficiente para la topología prevista.
+- `[VERIFICAR]` Los umbrales pueden generar alertas útiles con ruido tolerable.

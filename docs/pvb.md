@@ -1,649 +1,92 @@
-Product Vision Board
-====================
+# Product Vision Board — Sentinel
 
-PRODUCTO
---------
+**Fecha:** 2026-11-05  
+**Estado:** propuesta de producto; segmento e hipótesis comerciales no validados.
 
-### Nombre del producto
+## PRODUCTO
 
-**[INTERNO] Nombre provisional: Sentinel**
+**Nombre:** Sentinel (provisional).  
+**Descripción en una línea:** plataforma self-hosted para descubrir y monitorear activos de una red local autorizada, mantener inventario y telemetría, registrar logs y generar alertas mediante reglas deterministas, sin administrar los dispositivos.
 
-### Descripción en una línea
+## 1. PROBLEMA
 
-**Plataforma de monitoreo continuo de activos de red, orquestada mediante Kubernetes y asistida por un agente de IA que identifica cambios en los activos y propone acciones operativas bajo control humano.**
+**Problema que resuelvo:** el operador de una red local necesita conocer qué activos están visibles, qué cambios observables ocurren en sus direcciones, puertos, servicios y tráfico, y disponer de evidencia temporal para revisar esas variaciones sin mantener una colección dispersa de scripts.
 
-* * *
+**Durabilidad del problema:** sí, la necesidad de inventario y observabilidad de red es recurrente. La existencia de soluciones maduras reduce la oportunidad de diferenciación.
 
-1. PROBLEMA
+**Durability Score:** 3/5 `[INTERNO]`. El problema es persistente, pero Sentinel aún no demuestra una ventaja difícil de sustituir.
 
------------
+## 2. SEGMENTO TARGET
 
-### Problema que resuelvo
+**Para quién:** organizaciones pequeñas, laboratorios o equipos de TI/redes/ciberseguridad que operan una red local de aproximadamente 10–50 activos `[INTERNO]`, necesitan inventario y alertas básicas, y pueden ejecutar una solución self-hosted en Kubernetes.
 
-Los equipos de infraestructura y ciberseguridad necesitan mantener visibilidad sobre los activos que componen una red y reconocer oportunamente modificaciones en su estado. Sin embargo, la supervisión de múltiples activos puede requerir la ejecución coordinada de diferentes herramientas, consultas y procesos de recolección.
+**Quién controla el veto de confianza:** responsable de infraestructura, redes o ciberseguridad; puede vetar el despliegue si el sensor solicita permisos excesivos, provoca carga o recoge datos no autorizados.
 
-El producto establece un **estado base (baseline)** de cada activo y monitorea periódicamente seis atributos:
+## 3. VENTAJA COMPETITIVA PRIMARIA
 
-* IP
+**Ventaja primaria de propuesta:** Trust — observación acotada, evidencia visible y reglas explícitas.
 
-* MAC
+**Qué confianza aporta:** el sistema no modifica endpoints ni ejecuta respuestas automáticas; sus alertas muestran la condición medida y la regla que la disparó. Los sondeos activos sí generan paquetes de consulta, por lo que la operación no se describe como captura completamente pasiva.
 
-* Sistema operativo
+**Límite:** esto es un principio de diseño y una hipótesis de valor, no una ventaja exclusiva probada. Herramientas existentes pueden ofrecer controles equivalentes.
 
-* Puertos
+## 4. ARENA COMPETITIVA
 
-* Servicios
+**Arena:** integración de capacidades de monitoreo existentes.
 
-* Tráfico
+**Cómo compite:** no intenta reemplazar SIEM, NMS ni plataformas maduras. Como prototipo académico, integra descubrimiento de red, telemetría de tráfico y visualización sobre Kubernetes, con un alcance acotado y reproducible.
 
-Cada cinco segundos, el sistema compara el estado observado con el baseline y registra las diferencias encontradas.
+**Riesgo principal:** un usuario podría obtener un resultado suficiente con Zabbix, LibreNMS, Nagios, Wazuh o scripts propios.
 
-El producto **no pretende determinar automáticamente si un cambio constituye un ataque**. Su función en el MVP es identificar y registrar cambios observables para que puedan ser revisados posteriormente.
+## 5. PARADIGMA UX
 
-Este enfoque es coherente con el concepto de _Information Security Continuous Monitoring_ de NIST, cuyo objetivo incluye proporcionar visibilidad continua sobre los activos y sobre el estado de los controles de seguridad.
+**Interacción:** monitoreo automatizado con supervisión humana. El sistema realiza descubrimiento y calcula condiciones de monitoreo según la programación; Prometheus evalúa las reglas de alerta y el operador consulta inventario, logs, gráficas y notificaciones.
 
-### ¿El problema persistirá?
+**Límite:** el operador interpreta los eventos y decide qué hacer fuera de Sentinel. El sistema no ejecuta acciones de administración ni controles preventivos/de respuesta sobre los endpoints. Sí mantiene los permisos mínimos y el endurecimiento necesarios para proteger sus propios componentes.
 
-☑ Sí
+## 6. PRIORIDAD OPERACIONAL
 
-### Durability Score
+El objetivo es un equilibrio con prioridad en simplicidad y evidencia reproducible `[INTERNO]`.
 
-**4/5 [INTERNO]**
+**Trade-offs aceptados:**
+- Cobertura de atributos menor que la de plataformas con componentes residentes en los endpoints.
+- SO declarado o inferido únicamente cuando exista evidencia documentada; en ausencia de evidencia suficiente, `desconocido`.
+- Reglas de alerta limitadas y transparentes, en vez de clasificación opaca.
+- Topología y protocolos soportados limitados para mantener un MVP construible.
 
-La necesidad de conocer el estado de los activos y detectar cambios en una infraestructura es transversal a redes y sistemas que evolucionan continuamente. Sin embargo, la funcionalidad básica de inventario y monitoreo puede convertirse en una capacidad estándar de plataformas de observabilidad y seguridad existentes.
+## 7. MODELO ECONÓMICO
 
-La permanencia de la propuesta dependerá, por tanto, de la combinación de:
+**Modelo:** no definido. El proyecto es un prototipo académico; no hay evidencia de disposición a pagar, coste de soporte, coste operativo ni margen.
 
-* orquestación mediante Kubernetes;
+**Escala 10x:** TBD. Antes de formular pricing se deben medir carga de sondeo, cardinalidad de métricas, almacenamiento y número de sensores.
 
-* agente de IA;
+**Costos/ingresos/margen:** TBD; no se inventan cifras.
 
-* control humano sobre las acciones;
+## 8. MÉTRICAS DE ÉXITO
 
-* trazabilidad de las operaciones;
+**Métricas de usuario:**
+1. Tiempo desde que inicia un ciclo hasta que el inventario queda actualizado.
+2. Porcentaje de activos de la topología de laboratorio identificados correctamente frente al ground truth.
 
-* integración con herramientas existentes.
+**Métricas del sistema:**
+1. Tasa de eventos/alertas verdaderos y falsos frente a un conjunto de pruebas controlado.
+2. Latencia entre una condición de red inyectada y su registro/alerta.
 
-* * *
+**Métrica de ruido:** alertas no accionables por hora y porcentaje de alertas reconocidas como ruido en la revisión humana.
 
-2. SEGMENTO TARGET
+## 9. RIESGOS CRÍTICOS
 
-------------------
+| Riesgo | Respuesta |
+|---|---|
+| Comoditización | Comparar directamente con herramientas open source maduras; no declarar diferenciación sin prueba |
+| Replicación rápida | Aceptar que los scripts y dashboards son replicables; priorizar calidad de integración y evidencia |
+| Falsa sensación de detección | Nombrar reglas por condición observable, no como diagnóstico de amenazas |
+| Permisos excesivos | Sensor aislado, mínimos permisos y pruebas negativas |
+| Ruido de alertas | Umbrales configurables, ventanas, deduplicación y medición de falsos positivos |
+| Visibilidad insuficiente | POC de interfaz de captura antes de prometer monitoreo de la LAN |
 
-### ¿Para quién?
+## Hipótesis que deben validarse
 
-**Segmento primario:**
-
-* Equipos de ciberseguridad.
-
-* Administradores de infraestructura y redes.
-
-* Organizaciones que necesiten monitorear activos internos.
-
-**Segmentos secundarios:**
-
-* Laboratorios académicos de ciberseguridad.
-
-* Laboratorios de infraestructura y redes.
-
-* Instituciones educativas que necesiten demostrar monitoreo y orquestación de activos.
-
-### MVP / escenario de demostración
-
-El prototipo utilizará una red simulada compuesta por cinco activos:
-
-| Activo simulado | Cantidad |
-| --------------- | -------- |
-| Android         | 2        |
-| Linux           | 1        |
-| Windows         | 1        |
-| macOS           | 1        |
-| **Total**       | **5**    |
-
-**[INTERNO]** La implementación concreta de la simulación de estos sistemas se definirá en la etapa técnica del proyecto; el PVB no presupone que todos ellos sean implementados como contenedores Linux convencionales.
-
-### ¿Quién controla el veto de confianza?
-
-El **administrador de infraestructura o responsable de ciberseguridad**.
-
-Esta persona debe poder determinar qué acciones puede ejecutar el agente sobre la infraestructura y cuáles requieren autorización explícita.
-
-* * *
-
-3. VENTAJA COMPETITIVA PRIMARIA
-
--------------------------------
-
-### ☑ Trust
-
-### Control humano sobre las acciones del agente
-
-La diferenciación propuesta no consiste en afirmar que la IA interpreta mejor los eventos que un especialista.
-
-La propuesta consiste en que el agente pueda **automatizar y coordinar operaciones sin eliminar el control humano sobre las acciones que modifican o amplían el monitoreo**.
-
-El agente puede:
-
-* seleccionar una herramienta disponible;
-
-* determinar parámetros de ejecución;
-
-* ejecutar scripts autorizados;
-
-* consultar información del sistema;
-
-* interpretar resultados operativos;
-
-* detectar errores de ejecución;
-
-* reintentar operaciones;
-
-* proponer la siguiente acción.
-
-Pero las acciones relevantes sobre la infraestructura permanecen bajo autorización humana.
-
-### Ejemplo de evolución futura
-
-Si el sistema identifica un nuevo activo:
-    Nuevo activo detectado
-            ↓
-    Agente identifica sus características
-            ↓
-    Agente propone acciones
-            ↓
-    Usuario revisa y autoriza
-            ↓
-    Kubernetes crea/configura el recurso
-            ↓
-    Se inicia el monitoreo
-
-Por ejemplo, el agente podría proponer la creación de un nuevo Pod encargado de monitorizar el activo.
-
-**[FUTURO]** El producto podría incorporar dinámicamente nuevos activos mediante Pods de monitoreo gestionados por Kubernetes, siempre después de la autorización correspondiente.
-
-La ventaja de Trust se materializa entonces en la combinación de **automatización + autorización + trazabilidad**, en lugar de autonomía irrestricta.
-
-* * *
-
-4. ARENA COMPETITIVA
-
---------------------
-
-### ☑ Enhancer
-
-El producto se plantea como un **complemento de tecnologías existentes**, no como un reemplazo de Kubernetes, Grafana ni de las herramientas especializadas de monitoreo.
-
-La arquitectura combina diferentes capacidades:
-                  AGENTE IA
-                      │
-            ┌─────────┴─────────┐
-            │                   │
-            ▼                   ▼
-     Herramientas/scripts   Kubernetes API
-            │                   │
-            └─────────┬─────────┘
-                      ▼
-                MONITOREO
-                      │
-                      ▼
-                   DATOS
-                      │
-                      ▼
-                  GRAFANA
-
-Kubernetes proporciona la infraestructura para ejecutar y gestionar workloads mediante Pods y recursos de workload. Los Pods constituyen la unidad desplegable fundamental de Kubernetes y los Jobs permiten ejecutar tareas, gestionar reintentos y ejecutar Pods en paralelo cuando corresponde.
-
-Grafana proporciona la capa de visualización mediante dashboards y paneles que consultan y transforman datos procedentes de fuentes de información.
-
-Por tanto:
-
-* **Kubernetes** → orquestación.
-
-* **Herramientas/scripts** → adquisición y procesamiento determinista.
-
-* **Agente IA** → coordinación inteligente.
-
-* **Grafana** → visualización.
-
-* **Usuario** → autorización y control.
-
-### ¿Cómo sobrevive frente a un gigante, hyperscaler u open source CNCF?
-
-**[INTERNO]**
-
-La propuesta no busca competir mediante la sustitución de plataformas de observabilidad consolidadas.
-
-Su posición consiste en actuar como una capa de coordinación que:
-
-1. integra herramientas existentes;
-
-2. automatiza tareas operativas;
-
-3. utiliza Kubernetes como infraestructura de ejecución;
-
-4. introduce un agente capaz de seleccionar herramientas y parámetros;
-
-5. conserva intervención humana sobre acciones relevantes.
-
-Esto permite que el producto pueda evolucionar junto con el ecosistema en lugar de depender de la creación de un stack completo de observabilidad propio.
-
-* * *
-
-5. UX PARADIGM
-
---------------
-
-### ☑ Agent
-
-El producto utiliza un **agente de IA** porque el componente inteligente no se limita a responder preguntas.
-
-El agente recibe una instrucción operacional, consulta el contexto disponible, selecciona las herramientas apropiadas, determina parámetros, ejecuta la operación, verifica el resultado y gestiona errores.
-
-### Flujo de interacción
-
-    Usuario
-       │
-       ▼
-    Ordena ejecutar una etapa
-       │
-       ▼
-    Agente analiza contexto
-       │
-       ▼
-    Selecciona herramienta + parámetros
-       │
-       ▼
-    Ejecuta operación
-       │
-       ▼
-    Verifica resultado
-       │
-       ├── Correcto ──► "CHECK"
-       │
-       └── Error
-              │
-              ▼
-          Reintento
-              │
-              ▼
-       Ajuste de configuración
-              │
-              ▼
-          Nuevo intento
-              │
-              ▼
-          Resultado
-              │
-              ▼
-            Usuario
-
-**[INTERNO] Política operacional propuesta:**
-
-1. Primer intento con la configuración normal.
-
-2. Segundo intento manteniendo la configuración normal.
-
-3. Tercer intento realizando un ajuste de configuración.
-
-4. Si continúa fallando, se informa al usuario y se detiene la etapa.
-
-El agente **no ejecuta todo el flujo de manera autónoma**. El usuario mantiene el control sobre el avance entre etapas.
-
-* * *
-
-6. AI DECISION TRIANGLE
-
------------------------
-
-### ☑ Capability
-
-La prioridad del proyecto es **Capability**.
-
-El objetivo no es utilizar IA simplemente para generar texto, sino obtener capacidades de coordinación contextual que serían más difíciles de implementar mediante una secuencia completamente rígida de scripts.
-
-### ¿Qué capacidad aporta la IA?
-
-El agente debe poder:
-
-* identificar qué herramienta disponible corresponde a una tarea;
-
-* seleccionar parámetros apropiados;
-
-* interpretar resultados de las herramientas;
-
-* identificar errores;
-
-* decidir cuándo realizar un reintento permitido;
-
-* ajustar una configuración en el último intento;
-
-* consultar el estado de Kubernetes;
-
-* coordinar herramientas diferentes;
-
-* determinar qué información necesita para continuar;
-
-* presentar el resultado de cada etapa al usuario.
-
-### Trade-off
-
-**[INTERNO]**
-
-Se acepta:
-
-* mayor latencia;
-
-* mayor complejidad;
-
-* costo computacional adicional;
-
-* dependencia de un modelo de IA;
-
-a cambio de una mayor capacidad de coordinación y adaptación del flujo operacional.
-
-Las tareas deterministas de adquisición y comparación de datos permanecen fuera del modelo de IA cuando no sea necesario utilizar inteligencia generativa.
-
-Esto permite separar:
-
-**IA → decisión y coordinación**
-
-de
-
-**scripts → ejecución determinista y recolección**
-
-* * *
-
-7. MODELO ECONÓMICO
-
--------------------
-
-### ☑ Hybrid Tiered
-
-**[INTERNO] Modelo conceptual**
-
-| Nivel               | Características                                                     |
-| ------------------- | ------------------------------------------------------------------- |
-| **Academic / Free** | Número limitado de activos, monitoreo básico y uso educativo        |
-| **Professional**    | Mayor cantidad de activos, automatización y capacidades del agente  |
-| **Enterprise**      | Mayor escala, integración, control de permisos, auditoría y soporte |
-
-La elección de un modelo escalonado es consistente con la existencia de diferentes modelos comerciales en plataformas de observabilidad actuales. Por ejemplo, New Relic combina usuarios, ingestión de datos y capacidades adicionales según edición, mientras Grafana Cloud factura diferentes componentes según unidades de consumo como usuarios activos, series métricas, GB de logs u horas de host.
-
-### ¿Cómo escala 10×?
-
-**[INTERNO]**
-
-La unidad principal de crecimiento propuesta será el número de **activos monitorizados**.
-    MVP
-    5 activos
-
-          ↓ 10×
-
-    50 activos
-
-          ↓
-
-    500 activos
-
-          ↓
-
-    5.000 activos
-
-El incremento de activos requeriría aumentar la capacidad de ejecución y coordinación de Pods, recolección de datos y almacenamiento/visualización.
-
-La arquitectura basada en Kubernetes permite gestionar workloads mediante recursos que mantienen el estado deseado y administran grupos de Pods.
-
-### Costo por usuario / mes
-
-**[VERIFICAR]**
-
-El costo real dependerá de:
-
-* modelo de IA utilizado;
-
-* infraestructura Kubernetes;
-
-* almacenamiento;
-
-* volumen de telemetría;
-
-* frecuencia de monitoreo;
-
-* número de activos;
-
-* retención de información;
-
-* servicios externos utilizados.
-
-### Revenue por usuario / mes
-
-**[INTERNO]**
-
-Se establecerá posteriormente a partir del costo real de infraestructura y del segmento comercial objetivo.
-
-### Gross margin
-
-**[INTERNO]**
-
-La meta comercial deberá calcularse posteriormente con datos reales de infraestructura y consumo del modelo de IA.
-
-No se fija todavía un porcentaje para evitar presentar como dato de mercado una proyección que aún no ha sido validada.
-
-* * *
-
-8. MÉTRICAS DE ÉXITO
-
---------------------
-
-### User Metrics
-
-#### 1. Cobertura de monitoreo
-
-**Porcentaje de activos esperados que tienen sus seis atributos monitorizados.**
-    Cobertura =
-    activos monitorizados / activos identificados × 100
-
-**Objetivo MVP:**
-
-**[INTERNO] ≥ 90 %**
-
-para los cinco activos simulados.
-
-* * *
-
-#### 2. Detección de cambios
-
-**Porcentaje de cambios deliberadamente introducidos que son registrados correctamente por el sistema.**
-    Tasa de detección =
-    cambios registrados / cambios introducidos × 100
-
-**Objetivo MVP:**
-
-**[INTERNO] ≥ 95 %**
-
-para los cambios definidos en las pruebas.
-
-Esta métrica mide la capacidad del sistema para reconocer diferencias respecto al baseline; **no mide la capacidad de determinar si el cambio constituye un ataque**.
-
-* * *
-
-### AI Metrics
-
-#### 1. Éxito de ejecución de tareas
-
-**Porcentaje de etapas en las que el agente selecciona correctamente las herramientas y parámetros necesarios y obtiene un resultado válido.**
-    Éxito =
-    etapas completadas correctamente /
-    etapas ejecutadas × 100
-
-**Objetivo MVP:**
-
-**[INTERNO] ≥ 90 %**
-
-* * *
-
-#### 2. Recuperación ante errores
-
-**Porcentaje de fallos recuperables en los que el agente consigue completar la operación utilizando la política de reintentos definida.**
-    Recuperación =
-    fallos recuperados mediante reintento /
-    fallos recuperables × 100
-
-**Objetivo MVP:**
-
-**[INTERNO] ≥ 80 %**
-
-El agente dispondrá de un máximo de tres intentos:
-
-1. ejecución normal;
-
-2. reintento;
-
-3. ajuste de configuración + reintento.
-
-* * *
-
-9. RIESGOS CRÍTICOS
-
--------------------
-
-### ¿Qué ocurre si el problema desaparece en 12 meses porque se vuelve commodity?
-
-Las capacidades básicas de inventario, monitoreo y visualización ya forman parte de un mercado maduro de observabilidad.
-
-**Riesgo: Alto [INTERNO]**
-
-La respuesta propuesta es diferenciar el producto mediante:
-
-* coordinación basada en agentes;
-
-* Kubernetes como infraestructura de ejecución;
-
-* integración de herramientas existentes;
-
-* control humano;
-
-* trazabilidad de las acciones;
-
-* capacidad futura de incorporar nuevos activos mediante Pods.
-
-La propuesta no depende exclusivamente de inventariar o visualizar activos.
-
-* * *
-
-### ¿Puede un competidor replicarlo utilizando las mismas APIs en menos de seis semanas?
-
-**Sí, potencialmente. [INTERNO]**
-
-El uso de Kubernetes, Grafana, APIs y herramientas de monitoreo abiertas reduce las barreras técnicas para construir una solución funcional similar.
-
-La defensa propuesta no será la exclusividad de una tecnología concreta, sino la combinación de:
-
-* flujo operacional;
-
-* integración de herramientas;
-
-* configuración;
-
-* políticas de autorización;
-
-* experiencia de uso;
-
-* lógica de coordinación del agente;
-
-* trazabilidad.
-
-**[VERIFICAR]** La velocidad real de replicación deberá validarse mediante investigación competitiva posterior.
-
-* * *
-
-### Si el producto tiene éxito a escala, ¿cuál sería el primer punto de ruptura de confianza?
-
-**El primer punto de ruptura sería una acción incorrecta del agente sobre la infraestructura.**
-
-Ejemplos:
-
-* seleccionar una herramienta incorrecta;
-
-* utilizar parámetros incorrectos;
-
-* crear un recurso Kubernetes no autorizado;
-
-* interpretar incorrectamente un resultado;
-
-* modificar una configuración que no debía modificarse;
-
-* continuar una operación después de un resultado ambiguo.
-
-Por esta razón, el diseño incorpora:
-
-* intervención humana;
-
-* ejecución por etapas;
-
-* herramientas explícitamente disponibles;
-
-* parámetros controlados;
-
-* política limitada de reintentos;
-
-* reporte del resultado de cada etapa;
-
-* separación entre adquisición determinista y decisión asistida por IA.
-
-La confianza no depende únicamente de que el agente "acierte", sino de que **el usuario conserve capacidad de supervisión y autorización sobre las acciones relevantes**.
-
-* * *
-
-CHECKLIST
----------
-
-* Producto seleccionado.
-
-* Problema definido.
-
-* Segmento target definido.
-
-* Veto de confianza definido.
-
-* Ventaja primaria seleccionada: **Trust**.
-
-* Arena competitiva seleccionada: **Enhancer**.
-
-* Paradigma UX seleccionado: **Agent**.
-
-* Prioridad del AI Decision Triangle seleccionada: **Capability**.
-
-* Modelo económico seleccionado: **Hybrid Tiered**.
-
-* Métricas de usuario definidas.
-
-* Métricas de IA definidas.
-
-* Riesgos críticos identificados.
-
-* MVP delimitado a cinco activos simulados.
-
-* Seis atributos de monitoreo definidos.
-
-* Baseline y comparación cada cinco segundos definidos.
-
-* Detección de cambios diferenciada de detección de ataques.
-
-* Control humano sobre acciones del agente definido.
-
-* Visión futura de incorporación de nuevos activos mediante Kubernetes definida.
-
-* Investigación externa utilizada para validar conceptos fundamentales.
-
-* Investigación competitiva profunda.
-
-* Validación de precios y costos reales.
-
-* Validación experimental de las métricas propuestas.
-
-* PRD.
-
-* Diseño técnico definitivo.
-
-* Investigación adversarial del uso de IA.
+- `[INTERNO]` La integración de descubrimiento, métricas, logs y alertas reduce el esfuerzo frente a scripts separados.
+- `[VERIFICAR]` Existe un segmento que necesita una solución pequeña y self-hosted, pero no quiere desplegar una plataforma madura existente.
+- `[VERIFICAR]` El acceso de red requerido puede darse sin privilegios excesivos en el entorno seleccionado.

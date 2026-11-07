@@ -1,2486 +1,667 @@
-# Product Backlog — Sentinel
-
-> **Estado:** Backlog consolidado para implementación.
->
-> **Producto:** Sentinel
->
-> **Fuentes principales:** `prd.md` aprobado y `arquitectura.md` aprobada.
->
-> **Propósito:** convertir las decisiones del PRD y la arquitectura en unidades de trabajo ejecutables, verificables y ordenadas por dependencia.
->
-> **Convenciones:**
-> - `[APROBADO]` — decisión ya fijada en PRD/arquitectura.
-> - `[INTERNO]` — decisión o detalle propuesto para la implementación del proyecto.
-> - `[TBD]` — decisión pendiente que debe cerrarse antes de implementar el elemento que la necesita.
-> - `[VERIFICAR]` — afirmación o requisito que requiere validación externa.
-> - **Camino crítico** — historia cuya demora bloquea directa o indirectamente la sustentación final.
->
-> El backlog no introduce estimaciones de tiempo, costos ni capacidad de desarrollo no contenidas en las fuentes.
-
----
-
-# 1. Objetivo del backlog
-
-El backlog debe llevar Sentinel desde una base reproducible hasta una demostración extremo a extremo donde puedan observarse simultáneamente:
-
-```text
-Kubernetes central
-        ↓
-Workloads de monitoreo
-        ↓
-Evidencia determinista
-        ↓
-Tool Layer
-        ↓
-Agente IA
-        ↓
-Confirmación humana
-        ↓
-Ejecución controlada
-        ↓
-Auditoría
-        ↓
-Evaluación con IA vs. sin IA
-        ↓
-Demo final
-```
-
-La hipótesis principal que debe poder evaluarse es:
-
-> **La capa de agente de IA reduce el tiempo y esfuerzo operacional del workflow de monitoreo frente a ejecutar el mismo workflow sin IA, sin degradar seguridad, integridad de evidencia ni control humano.**
-
----
-
-# 2. Principios de ejecución del backlog
-
-## 2.1 Primero la ruta determinista, después la IA
-
-No se implementará el agente antes de que exista un workflow de monitoreo funcional sin IA.
-
-```text
-Scripts
-  ↓
-Kubernetes Jobs
-  ↓
-medición
-  ↓
-reporte
-  ↓
-baseline/comparación
-```
-
-Después:
-
-```text
-Agente
-  ↓
-Tool Layer
-  ↓
-Kubernetes
-  ↓
-workflow existente
-```
-
-## 2.2 Cada historia debe dejar evidencia
-
-Una historia no queda terminada porque “funcione visualmente”. Debe existir una evidencia reproducible:
-
-- comando;
-- salida de Kubernetes;
-- prueba automatizada;
-- log;
-- reporte;
-- captura de evidencia del workflow;
-- o resultado experimental.
-
-## 2.3 Seguridad antes de ampliar capacidades
+# Backlog de ingeniería — Sentinel
 
-La ampliación de capacidades del agente queda condicionada a que estén implementados los controles de:
+**Versión:** 3.0 · **Fecha:** 2026-11-05 · **Historias:** 47 · **Estado:** propuesta ejecutable.
 
-```text
-RBAC
-Tool allowlist
-validación de parámetros
-confirmación humana
-auditoría
-```
+## 1. Objetivo y reglas
 
-## 2.4 El backlog conserva los límites del MVP
+El backlog implementa descubrimiento autorizado, captura de metadatos, inventario temporal, reglas deterministas, alertas y observabilidad. Las historias se limitan al alcance descrito en el PRD; las funciones de administración de endpoints y respuesta activa quedan fuera de esta versión.
 
-No se incluyen como trabajo obligatorio del MVP:
+- Una historia se acepta solo con el criterio verificable y su evidencia.
+- Los sondeos se limitan a CIDR/puertos autorizados.
+- El acceso a la red externa y las capabilities del sensor son riesgos técnicos bloqueantes.
+- Las reglas describen condiciones observadas, no amenazas confirmadas.
+- `TBD` en umbrales/intervalos no debe reemplazarse por cifras arbitrarias.
 
-- descubrimiento automático de nuevos activos;
-- respuesta autónoma a ataques;
-- bloqueo automático de dispositivos/puertos;
-- acceso directo del agente a endpoints;
-- shell arbitrario;
-- detección de ataques mediante LLM;
-- comparación del baseline mediante LLM;
-- generación de reportes de monitoreo por IA;
-- SIEM completo;
-- NMS completo;
-- multi-tenancy;
-- alta disponibilidad empresarial.
+## 2. Épicas
 
----
+| Épica | Unidades | Historias | Objetivo |
+|---|---|---:|---|
+| E01 Base y contratos | U1 | SN-001–005 | Dominio, configuración, logs y contrato de métricas |
+| E02 Plataforma Kubernetes | U2 | SN-006–010 | Clúster, imagen, chart y persistencia |
+| E03 Descubrimiento | U3 | SN-011–015 | Inventario de red, servicios y certeza de SO |
+| E04 Sensor de tráfico | U4 | SN-016–020 | Captura de metadatos y agregación |
+| E05 Inventario e historial | U5 | SN-021–025 | Persistencia y comparación determinista |
+| E06 Condiciones deterministas | U6 | SN-026–030 | Cálculo de condiciones de dominio, umbrales e idempotencia de indicadores derivados de eventos fuente |
+| E07 Observabilidad | U7 | SN-031–035 | Prometheus, Grafana, dashboards y reglas |
+| E08 Seguridad y solo lectura | U8 | SN-036–040 | RBAC, NetworkPolicy y límites del sensor/endpoints |
+| E09 Entrega y evaluación | U9 | SN-041–047 | CI/CD, GitOps, ground truth y demo |
 
-# 3. Épicas
+## 3. Historias de usuario
 
-| ID | Épica | Resultado | Módulo principal |
-|---|---|---|---|
-| E01 | Base de proyecto y desarrollo reproducible | Repositorio y estructura de trabajo funcional | Base transversal |
-| E02 | Scripts y motor de monitoreo determinista | Discovery, monitoring, tráfico, baseline, comparación y reportes | M4–5 / M6 |
-| E03 | Kubernetes y workloads | Workloads Sentinel ejecutándose mediante Kubernetes | M4–5 |
-| E04 | Aplicación cloud-native y Helm | Stack reproducible y configurable | M6 |
-| E05 | Seguridad Kubernetes y frontera de autonomía | RBAC, ServiceAccounts, NetworkPolicies, Pod Security y pruebas negativas | M7 |
-| E06 | Observabilidad y auditoría | Métricas, logs, auditoría y visualización | M8 |
-| E07 | Tool Layer y agente IA | Agente limitado a tools autorizadas | Agentic Engineering / M8 |
-| E08 | Interfaz y control humano | UI, propuestas, aprobación, rechazo y escalamiento | M8 / Agentic Engineering |
-| E09 | GitOps y entrega reproducible | CI/CD y reconciliación declarativa | M8 |
-| E10 | Evaluación y red teaming | Dataset, pruebas, métricas, seguridad y escenario ARP | M8 / cierre |
-| E11 | Integración y sustentación | Demo extremo a extremo y evidencia final | Sesión 16 |
+### E01
 
----
+#### SN-001 — Crear estructura de repositorio
 
-# 4. Estados del backlog
+**Unidad:** U1 · **Módulo del curso:** M1 Linux/SDD
 
-Se propone utilizar estos estados durante la ejecución:
+**Historia:** Como desarrollador, quiero una estructura modular para mantener configuración, dominio, colectores y despliegue separados.
 
-```text
-BACKLOG
-READY
-IN PROGRESS
-BLOCKED
-IN REVIEW
-DONE
-```
+**Criterio de aceptación:** `tree -L 3` muestra `src/sentinel`, `tests`, `deploy/helm` y `docs`; no existen duplicados de módulos.
 
-No se asignan estados de ejecución en este documento; todas las historias parten como backlog de implementación.
+**Evidencia:** Árbol de archivos versionado.
 
----
+**Depende de:** —.
 
-# 5. Backlog detallado
+#### SN-002 — Definir contratos de dominio
 
-# E01 — Base de proyecto y desarrollo reproducible
+**Unidad:** U1 · **Módulo del curso:** M1 Linux/SDD
 
-## BL-001 — Estructurar el repositorio del proyecto
+**Historia:** Como sistema, quiero modelos tipados para activos, observaciones, eventos y alertas.
 
-**Historia**
+**Criterio de aceptación:** `pytest -q tests/unit/test_models.py` valida modelos válidos e inválidos.
 
-> Como desarrollador, quiero una estructura de repositorio coherente con PRD, arquitectura, código, scripts, despliegue y pruebas para que cada artefacto tenga una ubicación reproducible.
+**Evidencia:** Reporte pytest y fixtures.
 
-**Dependencias:** ninguna.
+**Depende de:** SN-001.
 
-**Prioridad:** Critical.
+#### SN-003 — Validar configuración de alcance
 
-**Camino crítico:** Sí.
+**Unidad:** U1 · **Módulo del curso:** M1 Linux/SDD
 
-**Criterios de aceptación**
+**Historia:** Como operador, quiero declarar CIDR, puertos, intervalos y límites antes de sondear.
 
-- `docs/`, `research/`, `src/`, `scripts/`, `deploy/` y `tests/` existen.
-- `docs/prd.md` y `docs/arquitectura.md` contienen las versiones aprobadas.
-- La estructura del repositorio puede recorrerse con `tree` o un comando equivalente sin rutas faltantes.
-- El repositorio contiene un README con instrucciones mínimas de arranque `[INTERNO]`.
+**Criterio de aceptación:** `pytest -q tests/unit/test_config.py` rechaza CIDR/puertos inválidos y rangos fuera del allowlist.
 
-**Evidencia**
+**Evidencia:** Fixtures y salida de pruebas negativas.
 
-Salida del comando de estructura del repositorio + commit que incorpora la estructura.
+**Depende de:** SN-002.
 
----
+#### SN-004 — Crear logger JSON
 
-## BL-002 — Versionar PRD y arquitectura aprobados
+**Unidad:** U1 · **Módulo del curso:** M1 Linux/SDD
 
-**Historia**
+**Historia:** Como operador, quiero logs estructurados y consistentes.
 
-> Como equipo de desarrollo, quiero versionar las especificaciones aprobadas para que las decisiones de producto y arquitectura sean la referencia del backlog.
+**Criterio de aceptación:** `pytest -q tests/unit/test_logging.py` verifica timestamp, nivel, componente y event_id.
 
-**Dependencias:** BL-001.
+**Evidencia:** Ejemplo JSON y pruebas.
 
-**Prioridad:** Critical.
+**Depende de:** SN-002.
 
-**Camino crítico:** Sí.
+#### SN-005 — Definir contrato de métricas
 
-**Criterios de aceptación**
+**Unidad:** U1 · **Módulo del curso:** M1 Linux/SDD
 
-- `docs/prd.md` está presente en Git.
-- `docs/arquitectura.md` está presente en Git.
-- Ambos archivos tienen un commit identificable.
-- El contenido del repositorio corresponde a las versiones aprobadas utilizadas para generar este backlog.
+**Historia:** Como desarrollador, quiero nombres y etiquetas de métricas estables.
 
-**Evidencia**
+**Criterio de aceptación:** `pytest -q tests/unit/test_metrics_contract.py` detecta nombres/labels inválidos y cardinalidad prohibida.
 
-`git log -- docs/prd.md docs/arquitectura.md` + hashes de commit.
+**Evidencia:** Catálogo de métricas y pruebas.
 
----
+**Depende de:** SN-002.
 
-## BL-003 — Definir estrategia de pruebas del proyecto
+### E02
 
-**Historia**
+#### SN-006 — Preparar clúster y namespaces
 
-> Como desarrollador, quiero una estructura para pruebas unitarias, integración y seguridad para que cada historia técnica pueda dejar evidencia verificable.
+**Unidad:** U2 · **Módulo del curso:** M2 Kubernetes/CKA
 
-**Dependencias:** BL-001.
+**Historia:** Como administrador, quiero un clúster de laboratorio con namespaces separados.
 
-**Prioridad:** High.
+**Criterio de aceptación:** `kubectl get ns sentinel monitoring` devuelve ambos namespaces.
 
-**Camino crítico:** Sí.
+**Evidencia:** Salida kubectl y versión del clúster.
 
-**Criterios de aceptación**
+**Depende de:** SN-001.
 
-- Existe `tests/`.
-- Existe una convención documentada para ejecutar pruebas.
-- Un comando de prueba básico finaliza correctamente, aunque el conjunto inicial sea mínimo.
+#### SN-007 — Empaquetar la imagen común de Sentinel
 
-**Evidencia**
+**Unidad:** U2 · **Módulo del curso:** M2 Contenedores
 
-Comando de test documentado + salida `pass`/exit code 0.
+**Historia:** Como desarrollador, quiero una imagen OCI común y reproducible que pueda ejecutar Core, Discovery Worker y Traffic Sensor con comandos de arranque diferentes.
 
----
+**Criterio de aceptación:** `docker build -t sentinel:test .` termina; `docker inspect sentinel:test` muestra usuario no-root y `pytest -q tests/container/test_entrypoints.py` valida el arranque de Core, Discovery Worker y Traffic Sensor con `command/args` diferentes.
 
-# E02 — Scripts y motor de monitoreo determinista
+**Evidencia:** Digest de imagen, Dockerfile y pruebas de entrypoints.
 
-## BL-004 — Implementar discovery determinista
+**Depende de:** SN-001,SN-002.
 
-**Historia**
+#### SN-008 — Definir Helm chart de Sentinel
 
-> Como analista, quiero ejecutar un discovery reproducible para obtener los atributos básicos de los activos.
+**Unidad:** U2 · **Módulo del curso:** M3 CKAD/Helm
 
-**Dependencias:** BL-001, BL-003.
+**Historia:** Como operador, quiero instalar Sentinel con valores declarativos.
 
-**Prioridad:** Critical.
+**Criterio de aceptación:** `helm lint deploy/helm/sentinel` termina sin errores.
 
-**Camino crítico:** Sí.
+**Evidencia:** Salida de helm lint.
 
-**Criterios de aceptación**
+**Depende de:** SN-006,SN-007.
 
-- El script de discovery está versionado.
-- Una ejecución genera datos para la topología definida.
-- Los resultados incluyen, cuando estén disponibles en la topología, IP, MAC, OS, puertos y servicios.
-- Dos ejecuciones sobre un estado estable producen resultados comparables.
+#### SN-009 — Desplegar Core y PVC
 
-**Evidencia**
+**Unidad:** U2 · **Módulo del curso:** M3 CKAD/Helm
 
-Salida de ejecución del script + archivo de resultados de una prueba repetida.
+**Historia:** Como operador, quiero que Core y su persistencia corran en Kubernetes.
 
----
+**Criterio de aceptación:** `kubectl rollout status deploy/sentinel-core -n sentinel` y `kubectl get pvc -n sentinel` muestran recursos listos; el Deployment tiene una réplica y estrategia `Recreate` para evitar dos escritores/montajes concurrentes del PVC durante una actualización.
 
-## BL-005 — Implementar medición periódica de monitoreo
+**Evidencia:** Salida kubectl y manifiestos renderizados.
 
-**Historia**
+**Depende de:** SN-008.
 
-> Como analista, quiero ejecutar mediciones periódicas para obtener el estado actual de los activos.
+#### SN-010 — Consultar estado de cargas desde Python
 
-**Dependencias:** BL-004.
+**Unidad:** U2 · **Módulo del curso:** M3 CKAD
 
-**Prioridad:** Critical.
+**Historia:** Como operador, quiero que Sentinel consulte el estado de sus Pods y Jobs mediante la API de Kubernetes para exponer la salud de sus propios procesos.
 
-**Camino crítico:** Sí.
+**Criterio de aceptación:** el cliente oficial de Kubernetes para Python consulta `Pods`, `Jobs` y `CronJobs` en `sentinel`; si un colector se traslada a `sentinel-capture`, consulta allí esos recursos con un Role/RoleBinding condicional de solo lectura. `pytest -q tests/integration/test_kubernetes_readonly_client.py` pasa y las pruebas RBAC demuestran `get/list/watch` permitidos y `create/update/patch/delete` denegados para Pods, Jobs y CronJobs en cada namespace utilizado.
 
-**Criterios de aceptación**
+**Evidencia:** ServiceAccount, Role/RoleBinding, pruebas del cliente y salidas de `kubectl auth can-i`.
 
-- El script de monitoreo está versionado.
-- El intervalo inicial configurado es de 5 s.
-- Se producen al menos 5 muestras para el baseline inicial.
-- Cada muestra contiene una marca temporal.
+**Depende de:** SN-009.
 
-**Evidencia**
+### E03
 
-Ejecución del script mostrando 5 muestras con intervalo temporal de 5 s.
+#### SN-011 — Implementar descubrimiento ARP
 
----
+**Unidad:** U3 · **Módulo del curso:** M2 Linux/Redes
 
-## BL-006 — Implementar medición de tráfico
+**Historia:** Como analista, quiero detectar hosts visibles en el segmento L2 autorizado.
 
-**Historia**
+**Criterio de aceptación:** `pytest -q tests/unit/test_arp_discovery.py` valida parsing de fixtures; prueba de laboratorio documenta IP/MAC detectadas.
 
-> Como analista, quiero registrar tráfico para observar volumen y comunicación entre activos.
+**Evidencia:** PCAP/fixture sintética y JSON de resultado.
 
-**Dependencias:** BL-005.
+**Depende de:** SN-002,SN-003,SN-006,SN-007.
 
-**Prioridad:** Critical.
+#### SN-012 — Implementar verificación de host
 
-**Camino crítico:** Sí.
+**Unidad:** U3 · **Módulo del curso:** M2 Redes
 
-**Criterios de aceptación**
+**Historia:** Como analista, quiero verificar disponibilidad con métodos permitidos.
 
-- Cada registro de tráfico contiene bytes/s.
-- Cada registro permite identificar IP origen.
-- Cada registro permite identificar IP destino.
-- Cada registro identifica el protocolo cuando esté disponible.
-- La salida puede ser consumida posteriormente por el reporte/Grafana.
+**Criterio de aceptación:** `pytest -q tests/unit/test_host_probe.py` prueba timeouts, respuestas y ausencia de respuesta.
 
-**Evidencia**
+**Evidencia:** Fixtures y métricas de ciclo.
 
-Registro de tráfico de una ejecución controlada + prueba que verifica los campos requeridos.
+**Depende de:** SN-003,SN-011.
 
----
+#### SN-013 — Integrar Nmap con allowlist
 
-## BL-007 — Implementar baseline inicial de tráfico
+**Unidad:** U3 · **Módulo del curso:** M2 Linux/Seguridad
 
-**Historia**
+**Historia:** Como operador, quiero sondear solo rangos y puertos autorizados.
 
-> Como analista, quiero construir una referencia de tráfico a partir de muestras iniciales para comparar el comportamiento posterior.
+**Criterio de aceptación:** `pytest -q tests/unit/test_nmap_command.py` demuestra que los argumentos se construyen desde la allowlist y usan `-sT -sV --version-light -p <puertos_autorizados> -oX -`. Los tests rechazan targets/flags arbitrarios, UDP (`-sU`), scripts NSE (`-sC`/`--script`), modo agresivo (`-A`), escaneo de SO (`-O`), `--allports` y cualquier puerto fuera de la allowlist. Los límites de tasa y timeout provienen de configuración validada. Las sondas de servicio se ejecutan solo sobre puertos TCP autorizados y quedan documentadas como tráfico activo; `-O` no se habilita en el MVP.
 
-**Dependencias:** BL-006.
+**Evidencia:** Comando renderizado de prueba y tests negativos.
 
-**Prioridad:** High.
+**Depende de:** SN-003,SN-007.
 
-**Camino crítico:** Sí.
+#### SN-014 — Normalizar puertos y servicios
 
-**Criterios de aceptación**
+**Unidad:** U3 · **Módulo del curso:** M2 Linux
 
-- Se toman 5 muestras.
-- Las muestras están separadas por 5 s.
-- Se calcula media `μ`.
-- Se calcula varianza muestral `s²`.
-- La salida identifica qué muestras constituyen el baseline.
-- El criterio exacto de umbral permanece documentado como `[TBD]` hasta que se cierre.
+**Historia:** Como analista, quiero un formato común de los puertos/servicios observados.
 
-**Evidencia**
+**Criterio de aceptación:** `pytest -q tests/unit/test_service_parse.py` valida la salida XML de Nmap (`-oX -`) y normaliza puertos TCP observados, servicio/versión identificados por respuesta, servicio probable derivado solo del puerto y estado `desconocido`. Los fixtures prueban respuestas sin coincidencia y versiones ausentes. Solo se procesan resultados de `-sT -sV --version-light`; no se ejecuta escaneo UDP.
 
-Archivo/log que contiene las 5 muestras, media y varianza calculadas.
+**Evidencia:** Fixtures XML de Nmap (`-oX`) con identificación confirmada, solo inferida por puerto, respuesta no coincidente y versión ausente; test report.
 
----
+**Depende de:** SN-013.
 
-## BL-008 — Implementar comparación determinista de estado
+#### SN-015 — Registrar certeza del SO
 
-**Historia**
+**Unidad:** U3 · **Módulo del curso:** M2 Redes
 
-> Como sistema de monitoreo, quiero comparar estado anterior y actual para registrar cambios sin depender del LLM.
+**Historia:** Como operador, quiero saber si el SO es inferido, declarado o desconocido.
 
-**Dependencias:** BL-004, BL-005, BL-007.
+**Criterio de aceptación:** `pytest -q tests/unit/test_os_confidence.py` distingue declarado, inferido y desconocido; no permite tratar un fingerprint como certeza. Si `-O` permanece deshabilitado, los activos sin evidencia suficiente se registran como `desconocido`.
 
-**Prioridad:** Critical.
+**Evidencia:** Pruebas y ejemplo de inventario.
 
-**Camino crítico:** Sí.
+**Depende de:** SN-013,SN-014.
 
-**Criterios de aceptación**
+### E04
 
-- El comparador recibe dos estados.
-- Detecta al menos un cambio introducido deliberadamente.
-- No genera un cambio cuando los estados son equivalentes.
-- El comparador no depende del proceso del agente IA.
+#### SN-016 — Crear abstracción de fuente de paquetes
 
-**Evidencia**
+**Unidad:** U4 · **Módulo del curso:** M2 Linux/Redes
 
-Prueba positiva + prueba negativa + ejecución sin levantar el agente.
+**Historia:** Como desarrollador, quiero desacoplar el sensor de Scapy y permitir fixtures.
 
----
+**Criterio de aceptación:** `pytest -q tests/unit/test_packet_source.py` ejecuta con fuente sintética sin privilegios.
 
-## BL-009 — Implementar generación de reportes en Shell Script
+**Evidencia:** Interfaz y pruebas unitarias.
 
-**Historia**
+**Depende de:** SN-002.
 
-> Como analista, quiero un reporte de texto plano generado por script para inspeccionar directamente la evidencia del monitoreo.
+#### SN-017 — Implementar parser de paquetes
 
-**Dependencias:** BL-005, BL-006.
+**Unidad:** U4 · **Módulo del curso:** M2 Redes
 
-**Prioridad:** Critical.
+**Historia:** Como analista, quiero extraer solo metadatos autorizados.
 
-**Camino crítico:** Sí.
+**Criterio de aceptación:** `pytest -q tests/unit/test_packet_parser.py` extrae tiempo, protocolo, src/dst y longitud IP para el agregado de tráfico, además de los campos ARP, sin guardar payload. Los puertos/servicios del inventario proceden del descubrimiento activo TCP de U3; U4 no duplica ese catálogo.
 
-**Criterios de aceptación**
+**Evidencia:** Fixtures y reporte de parseo.
 
-- El reporte se genera mediante script, principalmente Shell Script.
-- La salida contiene las columnas definidas por el PRD: IP, MAC, protocolo, puerto, tiempo y tráfico.
-- El contenido puede abrirse como texto plano.
-- La salida no depende de la generación de texto del LLM.
-- Una prueba demuestra correspondencia entre al menos una línea del reporte y la medición original.
+**Depende de:** SN-016.
 
-**Evidencia**
+#### SN-018 — Agregar tráfico en ventanas
 
-Archivo de reporte + salida de la herramienta fuente + prueba de correspondencia.
+**Unidad:** U4 · **Módulo del curso:** M2 Python
 
----
+**Historia:** Como analista, quiero agregar bytes/s por ventana, protocolo e interfaz, conservando las IP de origen/destino en observaciones estructuradas.
 
-## BL-010 — Implementar registro de cambio observado
+**Criterio de aceptación:** `pytest -q tests/unit/test_traffic_aggregation.py` verifica ventanas iniciales de 5 s `[INTERNO]`, cálculo de bytes/s conforme a `specs/prd.md` sección 3.2, bytes/s IP agregados por protocolo/interfaz con `src_ip` y `dst_ip` conservados en registros estructurados, y mensajes ARP/s por separado. ARP no suma a bytes/s IP.
 
-**Historia**
+**Evidencia:** Salida calculada comparada con expected.
 
-> Como analista, quiero que un cambio detectado quede registrado con valores anterior y actual para poder inspeccionarlo.
+**Depende de:** SN-017,SN-005.
 
-**Dependencias:** BL-008, BL-009.
+#### SN-019 — Integrar agregados de tráfico en métricas de Core
 
-**Prioridad:** Critical.
+**Unidad:** U4 · **Módulo del curso:** M3 Observabilidad
 
-**Camino crítico:** Sí.
+**Historia:** Como operador, quiero que Core exponga métricas del tráfico recibido desde el sensor.
 
-**Criterios de aceptación**
+**Criterio de aceptación:** con Core desplegado, `kubectl port-forward svc/sentinel-core 9108:9108 -n sentinel` y `curl -fsS http://127.0.0.1:9108/metrics | grep sentinel_traffic_bytes_per_second` encuentran la métrica. El sensor envía agregados al endpoint interno de Core en el puerto `8080`; no publica un endpoint Prometheus independiente.
 
-- Se registra timestamp.
-- Se identifica el activo.
-- Se conserva valor anterior y valor actual del atributo modificado.
-- El registro distingue cambio observado de interpretación causal.
+**Evidencia:** respuesta `/metrics` de Core, prueba de contrato y lote de observaciones aceptado.
 
-**Evidencia**
+**Depende de:** SN-018,SN-005.
 
-Caso de prueba donde se modifica un atributo conocido y se produce el registro esperado.
+#### SN-020 — Probar captura en interfaz de laboratorio
 
----
+**Unidad:** U4 · **Módulo del curso:** M2/M3 Redes-Kubernetes
 
-# E03 — Kubernetes y workloads
+**Historia:** Como operador, quiero verificar visibilidad real del segmento autorizado.
 
-## BL-011 — Preparar clúster Kubernetes de laboratorio
+**Criterio de aceptación:** Un test de integración registra tráfico conocido en la fuente seleccionada, entrega las observaciones a Core por el puerto `8080` y comprueba su agregación; sin interfaz/feed, el test queda explícitamente SKIP con causa.
 
-**Historia**
+**Evidencia:** Informe POC, comando y pcap sintético; nunca asumir acceso por defecto.
 
-> Como desarrollador, quiero un clúster Kubernetes reproducible para desplegar Sentinel y validar su arquitectura cloud-native.
+**Depende de:** SN-016,SN-017,SN-006,SN-007.
 
-**Dependencias:** BL-001.
+### E05
 
-**Prioridad:** Critical.
+#### SN-021 — Persistir inventario SQLite
 
-**Camino crítico:** Sí.
+**Unidad:** U5 · **Módulo del curso:** M3 Datos
 
-**Criterios de aceptación**
+**Historia:** Como operador, quiero conservar activos y observaciones entre ciclos.
 
-- El clúster está disponible.
-- `kubectl cluster-info` finaliza correctamente.
-- Se puede crear un namespace de prueba.
-- Se puede ejecutar y eliminar un Pod de prueba.
+**Criterio de aceptación:** `pytest -q tests/integration/test_inventory_repository.py` escribe/lee desde DB temporal y prueba migración inicial.
 
-**Evidencia**
+**Evidencia:** DB de prueba y reporte.
 
-Salida de `kubectl cluster-info`, `kubectl get nodes` y ejecución de un Pod de prueba.
+**Depende de:** SN-002,SN-009,SN-011.
 
----
+#### SN-022 — Comparar observaciones
 
-## BL-012 — Crear namespace funcional de Sentinel
+**Unidad:** U5 · **Módulo del curso:** M3 Python
 
-**Historia**
+**Historia:** Como analista, quiero registrar altas, ausencias y cambios sin alterar el dato original.
 
-> Como administrador, quiero un namespace dedicado para aislar los componentes funcionales de Sentinel.
+**Criterio de aceptación:** `pytest -q tests/unit/test_inventory_diff.py` verifica `first_seen`, `missing` y cambios de atributos. Un activo solo pasa a ausente después de N ciclos completos y exitosos que cubran su segmento; un ciclo fallido o parcial no genera `AssetMissing`.
 
-**Dependencias:** BL-011.
+**Evidencia:** Casos de referencia y salida.
 
-**Prioridad:** Critical.
+**Depende de:** SN-021,SN-015.
 
-**Camino crítico:** Sí.
+#### SN-023 — Registrar cambios IP↔MAC
 
-**Criterios de aceptación**
+**Unidad:** U5 · **Módulo del curso:** M3 Redes
 
-- Existe namespace `sentinel`.
-- Los componentes de Sentinel previstos pueden desplegarse dentro del namespace.
-- Los recursos aparecen mediante `kubectl get all -n sentinel` o comandos equivalentes.
+**Historia:** Como analista, quiero historial temporal de asociaciones IP/MAC.
 
-**Evidencia**
+**Criterio de aceptación:** `pytest -q tests/unit/test_arp_change.py` compara observaciones históricas y genera `ArpMappingChanged` solo cuando una misma IP presenta una MAC diferente; conserva asociación anterior/nueva, origen de observación, interfaz y timestamp. El parser de U4 solo extrae campos ARP y no realiza esta comparación.
 
-Manifiesto/configuración + salida de Kubernetes.
+**Evidencia:** JSON de evento y pruebas.
 
----
+**Depende de:** SN-011,SN-017,SN-021.
 
-## BL-013 — Empaquetar el script de monitoreo como workload
+#### SN-024 — Guardar eventos de tráfico
 
-**Historia**
+**Unidad:** U5 · **Módulo del curso:** M3 Datos
 
-> Como sistema, quiero ejecutar el monitoreo dentro de un workload Kubernetes para que Kubernetes sea parte efectiva del flujo.
+**Historia:** Como operador, quiero conservar eventos agregados sin payload de paquetes.
 
-**Dependencias:** BL-005, BL-011, BL-012.
+**Criterio de aceptación:** `pytest -q tests/unit/test_traffic_event_store.py` verifica campos mínimos y ausencia de payload/bytes crudos no permitidos.
 
-**Prioridad:** Critical.
+**Evidencia:** Esquema y pruebas.
 
-**Camino crítico:** Sí.
+**Depende de:** SN-018,SN-021.
 
-**Criterios de aceptación**
+#### SN-025 — Definir retención y exportación
 
-- Existe una imagen reproducible que contiene los scripts requeridos.
-- Un workload Kubernetes inicia el script.
-- El workload finaliza con código de salida esperado.
-- El resultado puede recuperarse desde Kubernetes.
+**Unidad:** U5 · **Módulo del curso:** M3 Datos
 
-**Evidencia**
+**Historia:** Como administrador, quiero exportar inventario/eventos y aplicar una retención limitada.
 
-`kubectl get job/pod`, logs del workload y código de salida.
+**Criterio de aceptación:** `pytest -q tests/integration/test_export_retention.py` produce JSON/CSV y elimina solo registros vencidos en DB temporal.
 
----
+**Evidencia:** Ficheros exportados y test report.
 
-## BL-014 — Implementar Discovery Job
+**Depende de:** SN-021,SN-022,SN-024.
 
-**Historia**
+### E06
 
-> Como usuario, quiero que el discovery se ejecute como Job Kubernetes cuando el workflow lo solicite.
+#### SN-026 — Definir catálogo de condiciones y umbrales
 
-**Dependencias:** BL-004, BL-013.
+**Unidad:** U6 · **Módulo del curso:** M3 Observabilidad
 
-**Prioridad:** Critical.
+**Historia:** Como operador, quiero un catálogo versionado de condiciones de dominio y sus umbrales.
 
-**Camino crítico:** Sí.
+**Criterio de aceptación:** `pytest -q tests/unit/test_conditions_config.py` valida identificadores, umbrales, unidad de agregación, parámetros de línea base y valores iniciales; no incluye duración `for` de alertas ni acciones sobre endpoints.
 
-**Criterios de aceptación**
+**Evidencia:** YAML versionado de condiciones/umbrales y tests.
 
-- El Job puede crearse mediante manifiesto o herramienta definida.
-- El Job termina correctamente en un caso normal.
-- Los resultados del discovery quedan disponibles para el siguiente paso.
+**Depende de:** SN-002,SN-003.
 
-**Evidencia**
+#### SN-027 — Calcular condición de tráfico elevado
 
-`kubectl get job` + `kubectl logs` + artefacto de salida.
+**Unidad:** U6 · **Módulo del curso:** M3 Observabilidad
 
----
+**Historia:** Como operador, quiero que Core calcule si la medición de tráfico supera el umbral de dominio configurado y publique un indicador verificable.
 
-## BL-015 — Implementar Monitoring Job
+**Criterio de aceptación:** `pytest -q tests/unit/test_traffic_condition.py` cubre valores por debajo, iguales y por encima del umbral, además del estado sin línea base. Core publica el indicador verdadero/falso; la duración `for` y el estado de la alerta corresponden a SN-035 en U7. El método de umbral definitivo continúa `TBD`; los tests usan fixtures parametrizados, no valores productivos inventados.
 
-**Historia**
+**Evidencia:** Fixtures por debajo/encima, valor del indicador y resultado pytest.
 
-> Como usuario, quiero ejecutar el monitoreo como Job Kubernetes para que el workflow esté orquestado por el clúster.
+**Depende de:** SN-018,SN-026.
 
-**Dependencias:** BL-013, BL-014.
+#### SN-028 — Calcular condiciones ARP observadas
 
-**Prioridad:** Critical.
+**Unidad:** U6 · **Módulo del curso:** M3 Redes
 
-**Camino crítico:** Sí.
+**Historia:** Como operador, quiero que Core publique indicadores para las condiciones ARP definidas.
 
-**Criterios de aceptación**
+**Criterio de aceptación:** `pytest -q tests/unit/test_arp_conditions.py` verifica dos condiciones independientes: tasa de mensajes ARP/s superior al umbral (requiere SN-018) y el evento `ArpMappingChanged` recibido desde U5. Core conserva evidencia de la condición sin atribuir intención; U7 define cómo se transforma el indicador en alerta.
 
-- El Job se crea correctamente.
-- Ejecuta al menos las mediciones configuradas.
-- Produce la salida esperada.
-- Su estado final puede verificarse con Kubernetes.
+**Evidencia:** Test report, indicadores y evento estructurado.
 
-**Evidencia**
+**Depende de:** SN-018,SN-023,SN-026.
 
-Manifest + `kubectl describe job` + logs + resultado generado.
+#### SN-029 — Calcular disponibilidad del Traffic Sensor
 
----
+**Unidad:** U6 · **Módulo del curso:** M3 Observabilidad
 
-## BL-016 — Implementar Report Job
+**Historia:** Como operador, quiero que Core publique el estado de disponibilidad del Traffic Sensor según la antigüedad de su última ventana recibida.
 
-**Historia**
+**Criterio de aceptación:** `pytest -q tests/unit/test_collector_health_condition.py` demuestra que `sentinel_collector_up{collector="traffic"}` permanece en `1` mientras la telemetría está dentro del plazo de vigencia configurado y pasa a `0` cuando lo supera; vuelve a `1` al recibirse telemetría válida. Los Jobs fallidos/parciales de descubrimiento se registran como `DiscoveryCycleFailed` y no afectan este indicador. La espera `for` y la notificación se verifican en SN-035/U7.
 
-> Como usuario, quiero generar el reporte mediante un Job Kubernetes para que la generación de evidencia forme parte del workflow cloud-native.
+**Evidencia:** fixtures temporales de última ventana, valores de la métrica y resultado pytest.
 
-**Dependencias:** BL-009, BL-015.
+**Depende de:** SN-005,SN-016,SN-019,SN-026.
 
-**Prioridad:** Critical.
+#### SN-030 — Garantizar idempotencia de indicadores derivados
 
-**Camino crítico:** Sí.
+**Unidad:** U6 · **Módulo del curso:** M3 Observabilidad
 
-**Criterios de aceptación**
+**Historia:** Como operador, quiero que la relectura de un mismo evento fuente no duplique los indicadores derivados que consume Prometheus.
 
-- El Job ejecuta el script de reporte.
-- El Job produce un archivo/texto de reporte.
-- El contenido coincide con la medición fuente en una prueba controlada.
+**Criterio de aceptación:** `pytest -q tests/unit/test_condition_metric_idempotency.py` demuestra que el mismo `event_id` de `ArpMappingChanged` incrementa `sentinel_arp_mapping_changes_total` una sola vez, aunque el lote se reprocese; un `event_id` distinto incrementa el contador una vez adicional. U5 conserva el evento fuente y su identidad; U6 no persiste una segunda copia del mismo evento. La agrupación, silenciamiento, repetición y resolución de notificaciones pertenecen a Alertmanager y no se replican en Core.
 
-**Evidencia**
+**Evidencia:** Fixtures con `event_id` repetidos/distintos, valores del contador antes/después y resultado pytest.
 
-Estado del Job + logs + reporte final.
+**Depende de:** SN-027,SN-028,SN-029.
 
----
+### E07
 
-## BL-017 — Implementar Recovery Job o mecanismo de recuperación
+#### SN-031 — Instalar kube-prometheus-stack
 
-**Historia**
+**Unidad:** U7 · **Módulo del curso:** M3 Helm
 
-> Como sistema, quiero ejecutar la recuperación controlada de un workflow fallido sin permitir reintentos indefinidos.
+**Historia:** Como operador, quiero desplegar Prometheus/Grafana/Alertmanager con Helm.
 
-**Dependencias:** BL-015.
+**Criterio de aceptación:** `helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace -f deploy/monitoring/values.yaml --dry-run` renderiza sin error; los values declaran selectores compatibles para ServiceMonitor y PrometheusRule ubicados en `sentinel`.
 
-**Prioridad:** High.
+**Evidencia:** Salida Helm y values versionados.
 
-**Camino crítico:** Sí.
+**Depende de:** SN-006.
 
-**Criterios de aceptación**
+#### SN-032 — Registrar ServiceMonitor
 
-- Existe una ruta de recuperación identificable.
-- Se puede simular un fallo inicial.
-- El sistema realiza el reintento definido.
-- El número máximo de intentos no supera el límite del PRD.
-- Un fallo persistente termina en escalamiento humano.
+**Unidad:** U7 · **Módulo del curso:** M3 Prometheus
 
-**Evidencia**
+**Historia:** Como operador, quiero que Prometheus scrape métricas de Sentinel.
 
-Logs con intento inicial, reintentos y estado final.
+**Criterio de aceptación:** `kubectl get servicemonitor -n sentinel` muestra el recurso; los selectores de Prometheus coinciden con labels/namespace del ServiceMonitor; el endpoint declara `port: metrics`, que corresponde al puerto nombrado `metrics:9108` del Service, y el target aparece `UP` en Prometheus. Prometheus obtiene los datos mediante scrape HTTP GET a `/metrics` (modelo pull).
 
----
+**Evidencia:** ServiceMonitor YAML y target status.
 
-# E04 — Aplicación cloud-native y Helm
+**Depende de:** SN-019,SN-031.
 
-## BL-018 — Definir configuración no sensible mediante ConfigMap
+#### SN-033 — Crear dashboard de inventario
 
-**Historia**
+**Unidad:** U7 · **Módulo del curso:** M3 Grafana
 
-> Como administrador, quiero separar configuración de la imagen para que los parámetros del workflow puedan cambiarse sin reconstruir el contenedor.
+**Historia:** Como analista, quiero consultar activos, última observación y cambios.
 
-**Dependencias:** BL-015.
+**Criterio de aceptación:** `python scripts/validate_dashboard.py dashboards/inventory.json` valida JSON/UID/paneles definidos. Grafana presenta métricas agregadas de inventario/cambios y última ejecución; el detalle por activo, IP/MAC y puertos/servicios se consulta mediante exportación estructurada CSV/JSON de Core, no se fuerza a labels Prometheus.
 
-**Prioridad:** High.
+**Evidencia:** Dashboard JSON y captura.
 
-**Camino crítico:** Sí.
+**Depende de:** SN-022,SN-032.
 
-**Criterios de aceptación**
+#### SN-034 — Crear dashboard de tráfico
 
-- Los parámetros no sensibles no están embebidos como valores fijos en la imagen.
-- Un `ConfigMap` puede proporcionar parámetros al workload.
-- Cambiar un parámetro requiere modificar la configuración y redeploy/restart según el mecanismo utilizado.
+**Unidad:** U7 · **Módulo del curso:** M3 Grafana
 
-**Evidencia**
+**Historia:** Como analista, quiero visualizar bytes/s agregados por protocolo e interfaz y consultar los registros estructurados de los flujos observados.
 
-`kubectl get configmap` + prueba con dos configuraciones distintas.
+**Criterio de aceptación:** `python scripts/validate_dashboard.py dashboards/traffic.json` valida datasource y consultas de métricas. El dashboard no usa IP origen/destino como labels de Prometheus; esos campos se consultan en los eventos exportados por Core en CSV/JSON.
 
----
+**Evidencia:** Dashboard JSON y captura.
 
-## BL-019 — Implementar Helm Chart de Sentinel
+**Depende de:** SN-019,SN-032.
 
-**Historia**
+#### SN-035 — Publicar reglas Prometheus
 
-> Como administrador, quiero desplegar Sentinel mediante Helm para obtener una instalación reproducible.
+**Unidad:** U7 · **Módulo del curso:** M3 Prometheus
 
-**Dependencias:** BL-012, BL-015, BL-016, BL-018.
+**Historia:** Como operador, quiero alertas integradas al stack de observabilidad.
 
-**Prioridad:** High.
+**Criterio de aceptación:** `promtool check rules deploy/monitoring/rules/sentinel.yml` termina sin errores; las reglas cubren `sentinel_traffic_threshold_exceeded`, `sentinel_arp_rate_threshold_exceeded`, incrementos de `sentinel_arp_mapping_changes_total` y `sentinel_collector_up{collector="traffic"} == 0`. Prometheus muestra las reglas cargadas y Alertmanager recibe una alerta de prueba. La configuración de Alertmanager agrupa notificaciones por regla y alcance acotado (`alertname`, `scope`, `sensor_id`), permite silencios y evita reenvíos duplicados dentro de la ventana configurada. No usa IP origen/destino ni MAC como labels de agrupación. `DiscoveryCycleFailed` se conserva en logs/inventario y no se confunde con la pérdida de latidos del Traffic Sensor.
 
-**Camino crítico:** Sí.
+**Evidencia:** Salida promtool y pantalla Rules.
 
-**Criterios de aceptación**
+**Depende de:** SN-026,SN-031,SN-032,SN-030.
 
-- Existe un Chart de Helm versionado.
-- `helm lint` finaliza correctamente.
-- `helm template` genera manifests válidos.
-- `helm install`/`upgrade` puede desplegar Sentinel en el namespace previsto.
+### E08
 
-**Evidencia**
+#### SN-036 — Crear ServiceAccounts separadas
 
-Salida de `helm lint`, `helm template` y `helm list`.
+**Unidad:** U8 · **Módulo del curso:** M4 Seguridad/CKS
 
----
+**Historia:** Como administrador, quiero identidades separadas para Core y colectores.
 
-## BL-020 — Ejecutar despliegue completo desde Helm
+**Criterio de aceptación:** `kubectl get sa -n sentinel` muestra `sentinel-core`, `sentinel-discovery` y `sentinel-sensor`; si algún colector se traslada a `sentinel-capture`, sus ServiceAccounts separadas existen allí. Ningún workload sensible utiliza la cuenta `default`.
 
-**Historia**
+**Evidencia:** Manifiestos y salida kubectl.
 
-> Como administrador, quiero instalar el stack completo mediante una única operación reproducible.
+**Depende de:** SN-006,SN-009.
 
-**Dependencias:** BL-019.
+#### SN-037 — Aplicar RBAC mínimo
 
-**Prioridad:** High.
+**Unidad:** U8 · **Módulo del curso:** M4 CKS
 
-**Camino crítico:** Sí.
+**Historia:** Como administrador, quiero permisos Kubernetes mínimos para las operaciones internas.
 
-**Criterios de aceptación**
+**Criterio de aceptación:** las consultas `kubectl auth can-i get/list/watch` para Pods, Jobs y CronJobs, con `--as=system:serviceaccount:sentinel:sentinel-core -n sentinel`, devuelven `yes`; `create/update/patch/delete` para esos recursos devuelven `no`. Si un colector vive en `sentinel-capture`, la misma matriz se comprueba allí mediante Role/RoleBinding en ese namespace. Discovery y Sensor no reciben token del API server.
 
-- UI, agente/tooling definido y workloads requeridos quedan desplegados.
-- Los Pods llegan al estado esperado.
-- Jobs funcionales pueden ejecutarse después de la instalación.
-- Se puede desinstalar y volver a instalar sin modificar manualmente los manifiestos generados.
+**Evidencia:** Salida de autorización revisada.
 
-**Evidencia**
+**Depende de:** SN-036.
 
-Logs de instalación + `kubectl get pods -n sentinel` + prueba de reinstalación.
+#### SN-038 — Aislar red interna del namespace
 
----
+**Unidad:** U8 · **Módulo del curso:** M4 CKS
 
-# E05 — Seguridad Kubernetes y frontera de autonomía
+**Historia:** Como administrador, quiero limitar comunicaciones entre workloads.
 
-## BL-021 — Crear ServiceAccount dedicado para el agente
+**Criterio de aceptación:** `kubectl get networkpolicy -n sentinel` muestra políticas declarativas; prueba de conectividad verifica allowlist en CNI compatible. Si se usa `hostNetwork`, se documenta y valida el comportamiento específico del CNI; no se afirma que NetworkPolicy filtre esos Pods de forma uniforme.
 
-**Historia**
+**Evidencia:** YAML y matriz de conectividad.
 
-> Como administrador, quiero una identidad Kubernetes dedicada para el agente para evitar reutilizar privilegios administrativos.
+**Depende de:** SN-006,SN-009.
 
-**Dependencias:** BL-012.
+#### SN-039 — Restringir capabilities de los colectores
 
-**Prioridad:** Critical.
+**Unidad:** U8 · **Módulo del curso:** M4 CKS
 
-**Camino crítico:** Sí.
+**Historia:** Como administrador, quiero conceder solo las capacidades requeridas por descubrimiento ARP y captura de paquetes.
 
-**Criterios de aceptación**
+**Criterio de aceptación:** se inspeccionan los `securityContext` del CronJob de descubrimiento y del Deployment del sensor. Ambos mantienen `privileged: false` y usuario no-root cuando sea viable. El POC separa `CAP_NET_RAW` de `CAP_NET_ADMIN`; esta última no se concede en el MVP. Baseline/Restricted no permiten añadir `CAP_NET_RAW`; si es imprescindible, el workload se mueve a `sentinel-capture`, se configura explícitamente Pod Security Admission para no contradecir la excepción y una política de admisión complementaria conserva las demás restricciones, permitiendo solo esa capability al ServiceAccount/workload autorizado. También se restringe por RBAC quién puede crear workloads en ese namespace. Los tests/manifiestos deben demostrar el rechazo de `privileged`, host namespaces, `hostPath`, `CAP_NET_ADMIN` y otras capabilities añadidas. Si no se puede verificar esa cadena de controles, debe utilizarse un feed que no requiera `CAP_NET_RAW` dentro del Pod.
 
-- Existe una ServiceAccount específica para el agente.
-- El Deployment del agente utiliza esa ServiceAccount.
-- El agente no utiliza la ServiceAccount por defecto.
+**Verificación:** inspeccionar los `securityContext` de ambos workloads en el namespace real. Si se trasladan, comprobar también la política de admisión y el Role/RoleBinding condicional. La verificación final debe mostrar únicamente `CAP_NET_RAW` cuando el POC la justifique, `privileged: false`, `CAP_NET_ADMIN` ausente y `drop: [ALL]` más las excepciones aprobadas.
 
-**Evidencia**
+**Evidencia:** manifests, resultados de `kubectl auth can-i` cuando aplique, pruebas de captura y justificación de cada capability.
 
-Manifest/objeto de ServiceAccount + `kubectl get deployment ... -o yaml`.
+**Depende de:** SN-013,SN-020,SN-036.
 
----
+#### SN-040 — Probar ausencia de acciones de escritura
 
-## BL-022 — Definir RBAC mínimo del agente
+**Unidad:** U8 · **Módulo del curso:** M4 Seguridad
 
-**Historia**
+**Historia:** Como responsable de red, quiero evidencia de que Sentinel no modifica endpoints.
 
-> Como responsable de seguridad, quiero que el agente solo tenga los permisos Kubernetes que requiere para sus tools.
+**Criterio de aceptación:** Tests de integración verifican que los comandos invocados pertenecen a allowlist de sondeo y no existen operaciones de configuración/firewall/servicio; `pytest -q tests/security/test_read_only_boundary.py` pasa.
 
-**Dependencias:** BL-021, BL-003.
+**Evidencia:** Lista de comandos permitidos, tests negativos y captura del laboratorio.
 
-**Prioridad:** Critical.
+**Depende de:** SN-013,SN-017,SN-037.
 
-**Camino crítico:** Sí.
+### E09
 
-**Criterios de aceptación**
+#### SN-041 — Configurar pipeline CI
 
-- Existe `Role`/`RoleBinding` o equivalente definido para el agente.
-- Los `apiGroups`, `resources` y `verbs` corresponden únicamente a las operaciones realmente implementadas.
-- No se concede `cluster-admin` al agente.
+**Unidad:** U9 · **Módulo del curso:** M5 CI/CD
 
-**Evidencia**
+**Historia:** Como desarrollador, quiero validar calidad en cada cambio.
 
-Manifiestos RBAC + revisión de `kubectl describe role/rolebinding`.
+**Criterio de aceptación:** El workflow ejecuta pytest, lint y helm lint; un PR con fallo queda no aprobado.
 
----
+**Evidencia:** Run de CI.
 
-## BL-023 — Validar permisos con `kubectl auth can-i`
+**Depende de:** SN-001,SN-008.
 
-**Historia**
+#### SN-042 — Escanear la imagen común de Sentinel
 
-> Como responsable de seguridad, quiero demostrar con pruebas positivas y negativas qué puede hacer el agente.
+**Unidad:** U9 · **Módulo del curso:** M5 Supply chain
 
-**Dependencias:** BL-022.
+**Historia:** Como operador, quiero que la imagen común de Sentinel tenga versión inmutable y análisis de componentes.
 
-**Prioridad:** Critical.
+**Criterio de aceptación:** CI construye una imagen `sentinel:<tag-inmutable>` reutilizada por Core y colectores y genera reporte de scanner/SBOM; no publica si falla la política definida.
 
-**Camino crítico:** Sí.
+**Evidencia:** Digest, SBOM/reporte y log CI.
 
-**Criterios de aceptación**
+**Depende de:** SN-007,SN-041.
 
-- Existen comprobaciones `can-i` para operaciones permitidas.
-- Existen comprobaciones `can-i` para operaciones prohibidas.
-- Las operaciones prohibidas devuelven `no`.
-- Los resultados de las pruebas quedan versionados como evidencia o reproducibles mediante comandos documentados.
+#### SN-043 — Desplegar manifests por GitOps
 
-**Evidencia**
+**Unidad:** U9 · **Módulo del curso:** M5 GitOps
 
-Salida de `kubectl auth can-i` para casos positivos y negativos.
+**Historia:** Como operador, quiero reconciliar el estado deseado desde Git.
 
----
+**Criterio de aceptación:** Si Argo CD está habilitado, Application queda Synced/Healthy tras commit; si se excluye, queda documentado el procedimiento Helm equivalente.
 
-## BL-024 — Aplicar Pod Security al namespace/workloads
+**Evidencia:** Application status o evidencia Helm.
 
-**Historia**
+**Depende de:** SN-008,SN-031,SN-041.
 
-> Como administrador, quiero una postura de ejecución restringida para reducir superficie de ataque de los workloads.
+#### SN-044 — Construir ground truth de laboratorio
 
-**Dependencias:** BL-020.
+**Unidad:** U9 · **Módulo del curso:** M5 Evaluación
 
-**Prioridad:** High.
+**Historia:** Como evaluador, quiero un inventario esperado y escenarios reproducibles.
 
-**Camino crítico:** Sí.
+**Criterio de aceptación:** `pytest -q tests/e2e/test_ground_truth.py` valida topología, fixtures y datos esperados.
 
-**Criterios de aceptación**
+**Evidencia:** Archivo de ground truth y resultados.
 
-- El mecanismo de Pod Security seleccionado está habilitado.
-- Los workloads de Sentinel pasan las restricciones aplicadas.
-- Un Pod de prueba que viole la política es rechazado cuando corresponde.
+**Depende de:** SN-011,SN-018.
 
-**Evidencia**
+#### SN-045 — Ejecutar prueba de tráfico alto
 
-Configuración de admisión + prueba de Pod válido y Pod rechazado.
+**Unidad:** U9 · **Módulo del curso:** M5 Demo
 
----
+**Historia:** Como evaluador, quiero comprobar que la regla alerta ante tráfico sintético por encima del umbral.
 
-## BL-025 — Aplicar NetworkPolicies
+**Criterio de aceptación:** un generador de prueba controlado produce una tasa por encima del umbral; la condición y alerta aparecen dentro de la ventana definida y el caso normal no dispara. La fuente de captura real de SN-020 debe estar validada; las pruebas con PCAP sintético se identifican como tales.
 
-**Historia**
+**Evidencia:** PCAP/estadística, regla, log y captura de Grafana.
 
-> Como administrador, quiero limitar las comunicaciones entre workloads para reducir movimiento lateral y accesos no previstos.
+**Depende de:** SN-020,SN-027,SN-034,SN-044.
 
-**Dependencias:** BL-020.
+#### SN-046 — Ejecutar prueba ARP controlada
 
-**Prioridad:** High.
+**Unidad:** U9 · **Módulo del curso:** M5 Demo
 
-**Camino crítico:** Sí.
+**Historia:** Como evaluador, quiero registrar el cambio IP↔MAC y la actividad ARP del escenario de laboratorio.
 
-**Criterios de aceptación**
+**Criterio de aceptación:** en una red aislada, dos dispositivos Android, un equipo macOS y un equipo Windows consultan la página HTTP del servidor Linux; un sexto activo temporal genera actividad ARP de prueba. Sentinel registra el aumento de mensajes ARP/s y el cambio observado de asociación entre la IP del servidor y la MAC de prueba, esperado aproximadamente 10 s después del inicio `[INTERNO]`. El registro describe la observación y no afirma detección general ni ataque confirmado.
 
-- Existen políticas para las comunicaciones internas requeridas.
-- Una comunicación permitida funciona.
-- Una comunicación no permitida falla.
+**Evidencia:** Logs, campos ARP y captura de Grafana.
 
-**Evidencia**
+**Depende de:** SN-018,SN-020,SN-028,SN-033,SN-044.
 
-Manifiestos NetworkPolicy + pruebas de conectividad positiva/negativa.
+#### SN-047 — Preparar sustentación y límites
 
----
+**Unidad:** U9 · **Módulo del curso:** M5 Sustentación
 
-## BL-026 — Validar que el agente no tenga acceso directo a endpoints
+**Historia:** Como estudiante, quiero demostrar capacidades y límites sin sobreafirmar detección.
 
-**Historia**
+**Criterio de aceptación:** checklist documenta despliegue, permisos, casos positivos/negativos, topología (cinco activos base y un sexto activo temporal para el escenario ARP), límites de identificación del SO, visibilidad de captura, umbrales utilizados y resultados de las pruebas.
 
-> Como responsable de seguridad, quiero demostrar que el agente carece de una ruta directa hacia los activos monitorizados.
+**Evidencia:** Guion, evidencias y matriz de trazabilidad.
 
-**Dependencias:** BL-023, BL-025.
+**Depende de:** SN-035,SN-039,SN-040,SN-043,SN-045,SN-046.
 
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El agente no dispone de credenciales de endpoint.
-- El agente no tiene una tool de endpoint directo.
-- Una prueba intenta acceder directamente y falla por arquitectura/permisos/configuración.
-- El camino permitido pasa por Tool Layer → Kubernetes → workload/script.
-
-**Evidencia**
-
-Inventario de credenciales/tools + prueba negativa + diagrama/ruta observada.
-
----
-
-## BL-027 — Validar ausencia de shell arbitrario
-
-**Historia**
-
-> Como responsable de seguridad, quiero demostrar que el agente no puede convertir una solicitud textual en ejecución shell arbitraria.
-
-**Dependencias:** BL-022, BL-026.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- No existe tool de ejecución shell genérica expuesta al agente.
-- Una solicitud para ejecutar un comando arbitrario es rechazada.
-- El intento queda registrado cuando corresponde.
-
-**Evidencia**
-
-Prueba negativa + configuración de tools + log.
-
----
-
-# E06 — Observabilidad y auditoría
-
-## BL-028 — Implementar métricas operacionales del agente
-
-**Historia**
-
-> Como administrador, quiero métricas del agente para observar workflows, tools, errores, reintentos y escalamiento.
-
-**Dependencias:** BL-007, BL-021.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se instrumentan métricas para workflows iniciados/completados/fallidos.
-- Se instrumentan tool calls y errores.
-- Se registra al menos el número de reintentos.
-- Se puede consultar el valor de una métrica después de una ejecución real.
-
-**Evidencia**
-
-Endpoint/salida de métricas + ejecución de prueba.
-
----
-
-## BL-029 — Implementar logs estructurados de operación
-
-**Historia**
-
-> Como administrador, quiero logs operacionales que permitan reconstruir una ejecución.
-
-**Dependencias:** BL-028.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Los logs contienen identificador de workflow.
-- Se registra tool, resultado, error e intento cuando corresponda.
-- Los logs no contienen secretos en claro.
-- Los logs pueden recuperarse desde Kubernetes.
-
-**Evidencia**
-
-`kubectl logs` o mecanismo equivalente + prueba de contenido.
-
----
-
-## BL-030 — Implementar auditoría de confirmaciones y ejecuciones
-
-**Historia**
-
-> Como responsable de seguridad, quiero trazabilidad de qué propuso el agente, quién aprobó y qué se ejecutó.
-
-**Dependencias:** BL-029, BL-021.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se registra usuario.
-- Se registra workflow.
-- Se registra tool.
-- Se registra parámetros relevantes.
-- Se registra confirmación/rechazo.
-- Se registra resultado y número de intento.
-- Se registra recurso Kubernetes relacionado cuando corresponda.
-
-**Evidencia**
-
-Registro completo de una ejecución con aprobación y resultado.
-
----
-
-## BL-031 — Integrar Grafana
-
-**Historia**
-
-> Como analista, quiero visualizar tráfico y actividad sin delegar al LLM la generación de esa visualización.
-
-**Dependencias:** BL-006, BL-028.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Grafana está desplegada o accesible según la arquitectura definida.
-- Existe una visualización de la métrica de tráfico seleccionada.
-- Una ejecución controlada produce un cambio visible en la métrica.
-- El agente no requiere acceso administrativo a Grafana.
-
-**Evidencia**
-
-Configuración del dashboard + valor observable antes y después de una prueba.
-
----
-
-# E07 — Tool Layer y agente IA
-
-## BL-032 — Implementar Tool Layer mínima
-
-**Historia**
-
-> Como arquitecto, quiero una capa intermedia entre el agente y Kubernetes para limitar y validar las capacidades disponibles.
-
-**Dependencias:** BL-022, BL-023, BL-015, BL-016.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La Tool Layer está separada del proceso del agente.
-- Existen únicamente las tools implementadas y autorizadas.
-- Una tool recibe parámetros explícitos.
-- Una llamada inválida puede ser rechazada antes de llegar a Kubernetes.
-- Las llamadas quedan registradas.
-
-**Evidencia**
-
-Prueba de tool válida + prueba inválida + logs.
-
----
-
-## BL-033 — Implementar `get_cluster_state()`
-
-**Historia**
-
-> Como agente, quiero consultar el estado permitido de Kubernetes para decidir el siguiente paso del workflow.
-
-**Dependencias:** BL-032, BL-023.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La tool devuelve únicamente información de recursos autorizados.
-- Una consulta a un recurso no autorizado falla.
-- La respuesta puede ser consumida por el agente.
-
-**Evidencia**
-
-Caso positivo y negativo + logs de tool call.
-
----
-
-## BL-034 — Implementar `discover_assets()`
-
-**Historia**
-
-> Como agente, quiero solicitar el discovery mediante una tool autorizada.
-
-**Dependencias:** BL-014, BL-032.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La tool crea/ejecuta el Discovery Job autorizado.
-- Recibe el resultado del Job.
-- No ejecuta shell arbitrario.
-
-**Evidencia**
-
-Tool call + Job creado + resultado recuperado.
-
----
-
-## BL-035 — Implementar `start_monitoring()`
-
-**Historia**
-
-> Como agente, quiero iniciar el workflow de monitoreo mediante una tool autorizada.
-
-**Dependencias:** BL-015, BL-032.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La tool crea/ejecuta el Monitoring Job esperado.
-- Los parámetros del workflow son explícitos.
-- La llamada respeta la autorización definida.
-- El resultado del Job es recuperable.
-
-**Evidencia**
-
-Tool call + Job + resultado.
-
----
-
-## BL-036 — Implementar `generate_report()`
-
-**Historia**
-
-> Como agente, quiero solicitar la generación del reporte mediante una tool sin generar yo mismo la evidencia.
-
-**Dependencias:** BL-016, BL-032.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La tool ejecuta el Report Job.
-- El contenido final proviene del script.
-- El agente no modifica la salida original.
-
-**Evidencia**
-
-Tool call + Report Job + hash/contenido del reporte antes y después de pasar por el agente `[INTERNO]`.
-
----
-
-## BL-037 — Implementar `restart_monitoring_job()`
-
-**Historia**
-
-> Como agente, quiero reintentar un workflow fallido dentro del límite permitido.
-
-**Dependencias:** BL-017, BL-032.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La tool solo actúa sobre el recurso autorizado.
-- El contador de intentos es persistente durante el workflow.
-- No permite exceder el número máximo definido.
-
-**Evidencia**
-
-Prueba de fallo + tres estados máximos de intento + bloqueo posterior.
-
----
-
-## BL-038 — Implementar `update_monitoring_config()` con allowlist
-
-**Historia**
-
-> Como agente, quiero solicitar cambios de configuración limitados a parámetros previamente permitidos.
-
-**Dependencias:** BL-018, BL-032, BL-023.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Solo puede modificar configuraciones de la allowlist.
-- Los parámetros se validan antes de ejecutar.
-- Un parámetro inválido es rechazado.
-- Una configuración no autorizada no puede ser modificada por la tool.
-
-**Evidencia**
-
-Pruebas positiva/negativa de configuración.
-
----
-
-## BL-039 — Implementar adapter del LLM
-
-**Historia**
-
-> Como arquitecto, quiero aislar la implementación del modelo detrás de un adapter para poder cambiar entre modelo local o externo sin reescribir workflows.
-
-**Dependencias:** BL-032.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El agente accede al modelo mediante una interfaz estable.
-- El workflow no depende de un proveedor concreto.
-- La configuración del proveedor/modelo está fuera de la imagen.
-- La implementación seleccionada queda documentada como `[TBD]` hasta la decisión final.
-
-**Evidencia**
-
-Diagrama/interfaz de adapter + prueba de invocación con el modelo seleccionado.
-
----
-
-## BL-040 — Implementar loop de agente limitado
-
-**Historia**
-
-> Como agente, quiero procesar solicitud → contexto → propuesta → aprobación → tool → resultado sin ejecutar fuera de los límites establecidos.
-
-**Dependencias:** BL-033, BL-034, BL-035, BL-036, BL-037, BL-038, BL-039.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El agente puede consultar contexto permitido.
-- Selecciona una tool autorizada en un caso normal.
-- No ejecuta antes de la confirmación requerida.
-- Usa el resultado de la tool para continuar el workflow.
-- Un error provoca el flujo de recovery definido.
-- Un estado no resoluble termina en escalamiento.
-
-**Evidencia**
-
-Ejecución completa del loop + trazas/logs de cada transición.
-
----
-
-## BL-041 — Implementar protección contra datos manipulados / prompt injection indirecto
-
-**Historia**
-
-> Como responsable de seguridad, quiero que los resultados de herramientas sean tratados como datos no confiables y no como instrucciones del sistema.
-
-**Dependencias:** BL-040, BL-030.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Un resultado de tool que contenga texto como “ignora instrucciones” no cambia la política del agente.
-- No se ejecuta una tool no autorizada como consecuencia del dato manipulado.
-- El evento de prueba puede reconstruirse mediante logs.
-
-**Evidencia**
-
-Caso adversarial documentado + salida esperada + logs.
-
----
-
-# E08 — Interfaz y control humano
-
-## BL-042 — Implementar interfaz mínima de operación
-
-**Historia**
-
-> Como analista, quiero una interfaz desde la cual iniciar un workflow y revisar su estado.
-
-**Dependencias:** BL-040, BL-029.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La UI está disponible en el mecanismo de acceso definido.
-- Permite iniciar un workflow.
-- Muestra el estado de la ejecución.
-- Permite acceder al resultado.
-
-**Evidencia**
-
-Prueba manual reproducible + logs del backend.
-
----
-
-## BL-043 — Implementar pantalla de propuesta y confirmación
-
-**Historia**
-
-> Como analista, quiero ver qué operación propone el agente y aprobarla o rechazarla antes de su ejecución.
-
-**Dependencias:** BL-042, BL-040.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La UI muestra herramienta y parámetros relevantes.
-- Existe acción explícita de aprobar.
-- Existe acción explícita de rechazar.
-- Rechazar no genera ejecución de la tool.
-- Aprobar genera la ejecución correspondiente.
-
-**Evidencia**
-
-Prueba con rechazo + prueba con aprobación + registros de auditoría.
-
----
-
-## BL-044 — Implementar expiración segura de aprobación
-
-**Historia**
-
-> Como usuario, quiero que el abandono o timeout de una aprobación pendiente no se interprete como autorización.
-
-**Dependencias:** BL-043.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Una aprobación pendiente expira o cancela según la regla definida.
-- La expiración no ejecuta la tool.
-- El evento queda registrado.
-
-**Evidencia**
-
-Prueba con timeout/abandono + ausencia de tool call + log.
-
----
-
-## BL-045 — Implementar escalamiento a humano
-
-**Historia**
-
-> Como analista, quiero recibir el contexto suficiente cuando el agente no logra resolver un workflow.
-
-**Dependencias:** BL-017, BL-040, BL-043.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se alcanza el estado de escalamiento después de agotar reintentos.
-- Se muestran operación, herramienta, último error e intentos.
-- El sistema no inicia otro intento automáticamente después del escalamiento.
-
-**Evidencia**
-
-Prueba de fallo persistente + pantalla/log de escalamiento.
-
----
-
-# E09 — GitOps y entrega reproducible
-
-## BL-046 — Preparar manifiestos declarativos para GitOps
-
-**Historia**
-
-> Como administrador, quiero que el estado deseado de Sentinel pueda almacenarse declarativamente en Git.
-
-**Dependencias:** BL-019, BL-024, BL-025.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Los manifiestos/Chart requeridos están versionados.
-- El despliegue puede reproducirse desde Git.
-- No hay Secrets reales en texto plano dentro del repositorio.
-
-**Evidencia**
-
-Repositorio + prueba de despliegue desde artefactos versionados.
-
----
-
-## BL-047 — Configurar Argo CD
-
-**Historia**
-
-> Como administrador, quiero que Argo CD reconcilie el estado deseado de Sentinel desde Git.
-
-**Dependencias:** BL-046.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Argo CD está desplegado en el namespace previsto.
-- Existe una aplicación que apunta al repositorio/configuración de Sentinel.
-- El estado sincronizado coincide con Git.
-
-**Evidencia**
-
-`kubectl` + estado de Argo CD + repositorio.
-
----
-
-## BL-048 — Validar reconciliación y rollback
-
-**Historia**
-
-> Como administrador, quiero demostrar que un cambio de Git se refleja en Kubernetes y que una reversión restaura el estado anterior.
-
-**Dependencias:** BL-047.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Un cambio controlado en Git provoca una reconciliación observable.
-- El estado anterior puede recuperarse mediante reversión versionada.
-- Tras el rollback, Kubernetes converge al estado esperado.
-
-**Evidencia**
-
-Commits antes/después + estado Argo CD/Kubernetes + prueba de rollback.
-
----
-
-## BL-049 — Verificar secretos fuera de Git en claro
-
-**Historia**
-
-> Como administrador, quiero que el mecanismo de secretos impida que credenciales reales aparezcan en imágenes o Git en texto plano.
-
-**Dependencias:** BL-046.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- No aparecen secretos reales mediante búsqueda controlada del repositorio.
-- No existen credenciales reales dentro de las imágenes publicadas `[INTERNO: prueba con revisión de imagen]`.
-- Los secretos se inyectan mediante el mecanismo seleccionado.
-
-**Evidencia**
-
-Resultado de revisión del repositorio + inspección de manifests/imagen + prueba de despliegue.
-
----
-
-# E10 — Evaluación y red teaming
-
-## BL-050 — Construir dataset inicial de evaluación del agente
-
-**Historia**
-
-> Como evaluador, quiero un conjunto de casos con ground truth para medir factualidad, adherencia, relevancia, selección de tools y seguridad.
-
-**Dependencias:** BL-040, BL-043.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Cada caso tiene ID.
-- Cada caso define entrada/contexto.
-- Cada caso define resultado esperado.
-- Existen casos normales, errores, rechazo, ambigüedad y solicitudes fuera de alcance.
-- Existen casos de prompt injection indirecto.
-
-**Evidencia**
-
-Archivo versionado de dataset + documentación del ground truth.
-
----
-
-## BL-051 — Implementar evaluación automática del comportamiento del agente
-
-**Historia**
-
-> Como evaluador, quiero pruebas automáticas para detectar llamadas incorrectas de tools, parámetros inválidos, falta de confirmación y otros incumplimientos.
-
-**Dependencias:** BL-050.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Las pruebas verifican selección de tool.
-- Verifican parámetros.
-- Verifican aprobación/rechazo.
-- Verifican resultado de ejecución.
-- Verifican límites de reintento.
-- Una violación crítica produce fallo de la prueba.
-
-**Evidencia**
-
-Salida del conjunto de pruebas con casos pass/fail.
-
----
-
-## BL-052 — Ejecutar revisión humana de outputs
-
-**Historia**
-
-> Como evaluador, quiero revisar manualmente factualidad, adherencia y relevancia donde la automatización no sea suficiente.
-
-**Dependencias:** BL-050.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Existe una rúbrica documentada.
-- Cada caso revisado tiene resultado.
-- Los casos con fallo tienen observación registrada.
-
-**Evidencia**
-
-Matriz de evaluación humana versionada.
-
----
-
-## BL-053 — Ejecutar red teaming de bypass de aprobación
-
-**Historia**
-
-> Como responsable de seguridad, quiero comprobar que el agente no ejecuta acciones cuando el usuario no las ha autorizado.
-
-**Dependencias:** BL-043, BL-051.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se prueban solicitudes directas para saltar aprobación.
-- La ejecución no autorizada no ocurre.
-- La prueba queda registrada.
-
-**Evidencia**
-
-Casos adversariales + resultado + auditoría.
-
----
-
-## BL-054 — Ejecutar red teaming de escalada de capacidades
-
-**Historia**
-
-> Como responsable de seguridad, quiero comprobar que el agente no puede obtener capacidades que no forman parte de su Tool Layer/RBAC.
-
-**Dependencias:** BL-023, BL-027, BL-051.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se prueba solicitud de shell arbitrario.
-- Se prueba creación de recursos no permitidos.
-- Se prueba operación fuera de RBAC.
-- Todas las acciones prohibidas son rechazadas.
-
-**Evidencia**
-
-Logs de cada prueba + salida `can-i` + resultado de ejecución.
-
----
-
-## BL-055 — Ejecutar red teaming de prompt injection indirecto
-
-**Historia**
-
-> Como responsable de seguridad, quiero demostrar que datos manipulados provenientes de tools no se convierten en instrucciones ejecutables.
-
-**Dependencias:** BL-041, BL-051.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se insertan textos de ataque en resultados de herramientas.
-- El agente mantiene sus restricciones.
-- No se ejecuta una operación no autorizada.
-- El incidente de prueba queda trazable.
-
-**Evidencia**
-
-Caso adversarial + output + tool call + auditoría.
-
----
-
-## BL-056 — Ejecutar escenario adversarial ARP controlado
-
-**Historia**
-
-> Como evaluador, quiero reproducir el escenario ARP definido para verificar qué cambios observables registra Sentinel.
-
-**Dependencias:** BL-010, BL-006, BL-031.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- La topología normal está establecida antes del escenario.
-- Se incorpora temporalmente el activo atacante definido para el laboratorio.
-- Se observa actividad ARP modificada durante el escenario.
-- Se registra un cambio en la asociación IP↔MAC cuando el escenario lo produzca.
-- El reporte conserva valores observados sin afirmar causalidad no demostrada.
-
-**Evidencia**
-
-Reporte antes/durante/después + métricas de tráfico/ARP + registro del cambio IP↔MAC.
-
----
-
-## BL-057 — Construir experimento con IA vs. sin IA
-
-**Historia**
-
-> Como evaluador, quiero ejecutar el mismo workflow en condición control y condición con agente para medir el aporte operacional de la IA.
-
-**Dependencias:** BL-040, BL-050, BL-051.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El workflow sin IA puede ejecutarse independientemente del agente.
-- El workflow con IA ejecuta las mismas funciones objetivo.
-- Se registra tiempo total de ambas condiciones.
-- Se registra tiempo humano de ambas condiciones.
-- Se registran errores y reintentos en ambas condiciones.
-
-**Evidencia**
-
-Dataset de ejecuciones + tabla comparativa + logs.
-
----
-
-## BL-058 — Medir North Star y métricas de calidad/seguridad
-
-**Historia**
-
-> Como evaluador, quiero calcular las métricas aprobadas para determinar si la IA aporta valor sin degradar seguridad ni evidencia.
-
-**Dependencias:** BL-057, BL-030, BL-051.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se calcula el tiempo mediano del workflow con y sin IA.
-- Se calcula tiempo operacional humano con y sin IA.
-- Se calcula tasa de workflows completados.
-- Se calcula tasa de llamadas correctas de tools.
-- Se calcula recuperación de fallos.
-- Se verifica que acciones no autorizadas sean 0 en la prueba de seguridad.
-- Se verifica integridad de evidencia en el conjunto evaluado.
-- Se calcula la métrica de ruido definida.
-
-**Evidencia**
-
-Notebook/script de análisis o informe reproducible + datos fuente.
-
----
-
-# E11 — Integración y sustentación
-
-## BL-059 — Integrar workflow extremo a extremo
-
-**Historia**
-
-> Como usuario, quiero ejecutar desde la interfaz un workflow completo que recorra agente, Tool Layer, Kubernetes, scripts, evidencia y auditoría.
-
-**Dependencias:** BL-043, BL-035, BL-036, BL-030, BL-031.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El usuario inicia el workflow desde la UI.
-- El agente consulta el estado permitido.
-- El agente propone una operación.
-- El usuario confirma.
-- Se ejecuta la tool.
-- Kubernetes crea/ejecuta el Job.
-- Se genera el reporte.
-- Se registra la auditoría.
-- El usuario puede revisar el resultado.
-
-**Evidencia**
-
-Grabación/capturas de ejecución + logs completos + reporte + auditoría.
-
----
-
-## BL-060 — Ejecutar workflow completo sin agente
-
-**Historia**
-
-> Como evaluador, quiero una versión control del workflow para comparar el aporte de la IA.
-
-**Dependencias:** BL-016, BL-008, BL-030.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El workflow puede ejecutarse sin levantar el agente.
-- Produce el mismo tipo de evidencia funcional objetivo.
-- Sus tiempos y pasos quedan registrados.
-
-**Evidencia**
-
-Ejecución documentada + reportes + tiempos.
-
----
-
-## BL-061 — Preparar demo de error y recuperación
-
-**Historia**
-
-> Como presentador, quiero demostrar un fallo recuperable y/o un escalamiento para evidenciar los límites de autonomía del agente.
-
-**Dependencias:** BL-017, BL-045.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se puede provocar un fallo controlado.
-- El agente realiza los reintentos definidos.
-- La demo termina en éxito recuperado o escalamiento según el caso preparado.
-- Los logs muestran la secuencia completa.
-
-**Evidencia**
-
-Logs del escenario + estado final + evidencia visual de la demo.
-
----
-
-## BL-062 — Preparar demo de seguridad Kubernetes
-
-**Historia**
-
-> Como presentador, quiero demostrar que la frontera de autonomía es real y verificable.
-
-**Dependencias:** BL-023, BL-024, BL-025, BL-026, BL-027.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se muestra al menos un permiso permitido.
-- Se muestra al menos un permiso denegado.
-- Se demuestra que el agente no tiene shell arbitrario.
-- Se demuestra la separación de permisos mediante ServiceAccount/RBAC.
-
-**Evidencia**
-
-Comandos `kubectl auth can-i` + manifests + resultado de prueba negativa.
-
----
-
-## BL-063 — Preparar demo del escenario ARP
-
-**Historia**
-
-> Como presentador, quiero demostrar el escenario adversarial controlado y la evidencia objetiva producida por Sentinel.
-
-**Dependencias:** BL-056.
-
-**Prioridad:** High.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- El tráfico normal inicial está registrado.
-- El atacante temporal puede incorporarse y retirarse de la topología.
-- El cambio IP↔MAC esperado por el escenario puede observarse en el reporte cuando ocurra.
-- La actividad ARP modificada aparece en la evidencia disponible.
-- El lenguaje de la demo distingue observación de interpretación causal.
-
-**Evidencia**
-
-Reporte de laboratorio + dashboard + guion técnico de la demo.
-
----
-
-## BL-064 — Preparar demo de comparación con/sin IA
-
-**Historia**
-
-> Como presentador, quiero mostrar de forma reproducible el experimento que mide el aporte de la IA.
-
-**Dependencias:** BL-057, BL-058.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- Se ejecuta el workflow control.
-- Se ejecuta el workflow con agente.
-- Se muestran tiempos comparables.
-- Se muestran errores/reintentos.
-- Se conserva la evidencia de ambas ejecuciones.
-
-**Evidencia**
-
-Tabla/gráfico de resultados + logs de las dos condiciones.
-
----
-
-## BL-065 — Preparar paquete final de sustentación
-
-**Historia**
-
-> Como responsable del proyecto, quiero un paquete final reproducible para presentar la solución completa y demostrar sus decisiones técnicas.
-
-**Dependencias:** BL-059, BL-060, BL-061, BL-062, BL-063, BL-064, BL-048.
-
-**Prioridad:** Critical.
-
-**Camino crítico:** Sí.
-
-**Criterios de aceptación**
-
-- PRD, arquitectura y backlog están versionados.
-- El despliegue puede reproducirse desde el repositorio definido.
-- Existe evidencia de Kubernetes.
-- Existe evidencia de seguridad/RBAC.
-- Existe evidencia de monitoreo y reportes.
-- Existe evidencia de agente + aprobación.
-- Existe evidencia de evaluación con/sin IA.
-- Existe evidencia del escenario ARP.
-- Existe una guía de ejecución de la demo.
-
-**Evidencia**
-
-Repositorio final + checklist de sustentación completado + versión/commit final.
-
----
-
-# 6. Dependencias resumidas
+## 4. Dependencias resumidas entre unidades
 
 ```mermaid
-flowchart LR
-    A[BL-001 Repo] --> B[BL-004 Discovery]
-    A --> C[BL-011 Kubernetes]
-    A --> D[BL-003 Tests]
-
-    B --> E[BL-005 Monitoring]
-    E --> F[BL-006 Traffic]
-    F --> G[BL-007 Baseline]
-    E --> H[BL-009 Reporte]
-    G --> I[BL-008 Comparator]
-    I --> J[BL-010 Evento]
-
-    C --> K[BL-012 Namespace]
-    K --> L[BL-013 Workload]
-    L --> M[BL-014 Discovery Job]
-    M --> N[BL-015 Monitoring Job]
-    N --> O[BL-016 Report Job]
-    N --> P[BL-017 Recovery]
-
-    K --> Q[BL-021 Agent SA]
-    Q --> R[BL-022 RBAC]
-    R --> S[BL-023 can-i]
-    S --> T[BL-026 No endpoint access]
-    S --> U[BL-027 No shell arbitrario]
-
-    N --> V[BL-032 Tool Layer]
-    O --> V
-    P --> V
-    V --> W[BL-040 Agent Loop]
-    W --> X[BL-043 Confirmación]
-    X --> Y[BL-059 E2E]
-
-    O --> Z[BL-031 Grafana]
-    R --> AA[BL-030 Audit]
-    AA --> Y
-
-    W --> AB[BL-050 Dataset]
-    AB --> AC[BL-051 Eval]
-    AC --> AD[BL-057 Con/sin IA]
-    AD --> AE[BL-058 Métricas]
-
-    J --> AF[BL-056 ARP]
-    Z --> AF
-    AF --> AG[BL-063 Demo ARP]
-
-    AE --> AH[BL-064 Demo con/sin IA]
-    Y --> AI[BL-065 Sustentación]
-    AG --> AI
-    AH --> AI
+flowchart TD
+  U1[U1 Base y contratos] --> U2[U2 Kubernetes y chart]
+  U2 --> U3[U3 Descubrimiento]
+  U2 --> U4[U4 Sensor de tráfico]
+  U2 --> U7[U7 Observabilidad]
+  U3 --> U5[U5 Inventario e historial]
+  U4 --> U5
+  U5 --> U6[U6 Condiciones deterministas]
+  U4 --> U7[U7 Observabilidad]
+  U6 --> U7
+  U2 --> U8[U8 Seguridad y solo lectura]
+  U3 --> U8
+  U4 --> U8
+  U7 --> U9[U9 Entrega y evaluación]
+  U8 --> U9
 ```
 
----
+El grafo completo y la verificación acíclica están en `units/unit-of-work-dependency.md`.
 
-# 7. Orden global recomendado de ejecución
+## 5. Orden recomendado
 
-El siguiente orden evita implementar capacidades que dependen de componentes aún inexistentes.
+1. **Fundación:** SN-001–010.
+2. **Recolección:** SN-011–020. El POC de interfaz de captura (SN-020) es bloqueante para el caso de tráfico real.
+3. **Estado y alertas:** SN-021–030.
+4. **Visualización:** SN-031–035.
+5. **Seguridad:** SN-036–040; comenzar en paralelo desde que el deployment esté disponible.
+6. **Entrega y evaluación:** SN-041–047.
 
-## Fase A — Base
+## 6. Camino crítico
 
-```text
-BL-001
-BL-002
-BL-003
-```
+La ruta más larga calculada a partir de las dependencias directas de las historias es: `SN-001 → SN-002 → SN-007 → SN-008 → SN-009 → SN-021 → SN-023 → SN-028 → SN-030 → SN-035 → SN-047` (11 historias). La ruta se reproduce mediante `python scripts/verify_traceability.py`.
 
-## Fase B — Monitoreo determinista
+El POC de captura real (SN-020) es un prerrequisito explícito de SN-045 y SN-046; también puede convertirse en bloqueo de calendario antes de completar la lógica, por lo que debe ejecutarse temprano. Si no se resuelve la interfaz/feed, la evidencia debe identificarse como PCAP sintético y no como observación de la LAN.
 
-```text
-BL-004
-BL-005
-BL-006
-BL-007
-BL-008
-BL-009
-BL-010
-```
+## 7. Agrupación por módulos
 
-## Fase C — Kubernetes
-
-```text
-BL-011
-BL-012
-BL-013
-BL-014
-BL-015
-BL-016
-BL-017
-```
-
-## Fase D — Cloud-native / Helm
-
-```text
-BL-018
-BL-019
-BL-020
-```
-
-## Fase E — Seguridad
-
-```text
-BL-021
-BL-022
-BL-023
-BL-024
-BL-025
-BL-026
-BL-027
-```
-
-## Fase F — Observabilidad
-
-```text
-BL-028
-BL-029
-BL-030
-BL-031
-```
-
-## Fase G — Agentic Engineering
-
-```text
-BL-032
-BL-033
-BL-034
-BL-035
-BL-036
-BL-037
-BL-038
-BL-039
-BL-040
-BL-041
-```
-
-## Fase H — UI / Human-in-the-loop
-
-```text
-BL-042
-BL-043
-BL-044
-BL-045
-```
-
-## Fase I — GitOps
-
-```text
-BL-046
-BL-047
-BL-048
-BL-049
-```
-
-## Fase J — Evaluación
-
-```text
-BL-050
-BL-051
-BL-052
-BL-053
-BL-054
-BL-055
-BL-056
-BL-057
-BL-058
-```
-
-## Fase K — Integración y sustentación
-
-```text
-BL-059
-BL-060
-BL-061
-BL-062
-BL-063
-BL-064
-BL-065
-```
-
----
-
-# 8. Agrupación por módulo del curso
-
-## Módulos 4–5 — Kubernetes / CKA
-
-### Objetivos de aprendizaje aplicados a Sentinel
-
-- preparar y operar clúster;
-- namespaces;
-- Pods/Jobs;
-- redes;
-- scheduling/troubleshooting;
-- observabilidad básica.
-
-### Historias
-
-```text
-BL-011  Clúster
-BL-012  Namespace
-BL-013  Workload
-BL-014  Discovery Job
-BL-015  Monitoring Job
-BL-017  Recovery
-```
-
-### Validación
-
-```text
-kubectl get nodes
-kubectl get pods
-kubectl get jobs
-kubectl logs
-kubectl describe
-```
-
----
-
-## Módulo 6 — CKAD / Helm
-
-### Objetivos aplicados
-
-- workloads;
-- configuración;
-- Jobs;
-- ConfigMaps;
-- Helm;
-- despliegue reproducible.
-
-### Historias
-
-```text
-BL-016  Report Job
-BL-018  ConfigMap
-BL-019  Helm Chart
-BL-020  Despliegue completo
-```
-
-### Validación
-
-```text
-helm lint
-helm template
-helm install
-helm list
-kubectl get pods
-```
-
----
-
-## Módulo 7 — CKS / seguridad Kubernetes
-
-### Objetivos aplicados
-
-- ServiceAccounts;
-- RBAC;
-- mínimo privilegio;
-- NetworkPolicies;
-- Pod Security;
-- pruebas negativas.
-
-### Historias
-
-```text
-BL-021  ServiceAccount
-BL-022  RBAC
-BL-023  can-i
-BL-024  Pod Security
-BL-025  NetworkPolicies
-BL-026  No acceso directo a endpoints
-BL-027  No shell arbitrario
-```
-
-### Validación
-
-```text
-kubectl auth can-i ...
-kubectl get role
-kubectl get rolebinding
-kubectl get networkpolicy
-```
-
----
-
-## Módulo 8 — Producción / GitOps / métricas
-
-### Objetivos aplicados
-
-- métricas;
-- logs;
-- operación reproducible;
-- GitOps;
-- rollback;
-- evidencia operativa.
-
-### Historias
-
-```text
-BL-028  Métricas
-BL-029  Logs
-BL-030  Auditoría
-BL-031  Grafana
-BL-046  GitOps manifests
-BL-047  Argo CD
-BL-048  Rollback
-BL-049  Secrets
-```
-
----
-
-## Bloque Agentic Engineering / MCP
-
-La aplicación concreta al proyecto es:
-
-- tool use;
-- agentic loop;
-- Tool Layer;
-- aprobación humana;
-- evaluación adversarial;
-- trazabilidad.
-
-### Historias
-
-```text
-BL-032  Tool Layer
-BL-033  Cluster state
-BL-034  Discovery tool
-BL-035  Monitoring tool
-BL-036  Report tool
-BL-037  Recovery tool
-BL-038  Config tool
-BL-039  LLM adapter
-BL-040  Agent loop
-BL-041  Prompt injection
-BL-043  Confirmación
-BL-044  Timeout seguro
-BL-045  Escalamiento
-BL-050–BL-055  Evaluación/red teaming
-```
-
-El programa del curso incluye explícitamente tool use, agentic loops, MCP y construcción de agentes para automatizar tareas en Kubernetes. 
-
----
-
-# 9. Camino crítico hacia la sustentación
-
-El camino crítico no es una única cadena lineal porque varias ramas pueden desarrollarse en paralelo, pero existe un conjunto mínimo de historias cuyo retraso bloquea la demo final.
-
-## Cadena principal
-
-```text
-BL-001
-  ↓
-BL-011
-  ↓
-BL-012
-  ↓
-BL-013
-  ↓
-BL-015
-  ↓
-BL-016
-  ↓
-BL-021
-  ↓
-BL-022
-  ↓
-BL-023
-  ↓
-BL-032
-  ↓
-BL-035
-  ↓
-BL-039
-  ↓
-BL-040
-  ↓
-BL-043
-  ↓
-BL-030
-  ↓
-BL-059
-```
-
-## Rama de evidencia determinista
-
-```text
-BL-004
-  ↓
-BL-005
-  ↓
-BL-006
-  ↓
-BL-007
-  ↓
-BL-008
-  ↓
-BL-009
-  ↓
-BL-010
-  ↓
-BL-056
-  ↓
-BL-063
-```
-
-## Rama de evaluación de IA
-
-```text
-BL-040
-  ↓
-BL-050
-  ↓
-BL-051
-  ↓
-BL-057
-  ↓
-BL-058
-  ↓
-BL-064
-```
-
-## Rama de seguridad
-
-```text
-BL-021
-  ↓
-BL-022
-  ↓
-BL-023
-  ↓
-BL-024
-  ↓
-BL-025
-  ↓
-BL-026 / BL-027
-  ↓
-BL-062
-```
-
-## Convergencia final
-
-```text
-BL-059  Workflow E2E
-   │
-BL-062  Demo seguridad
-   │
-BL-063  Demo ARP
-   │
-BL-064  Demo con/sin IA
-   │
-BL-048  GitOps / rollback
-   │
-   └──────────────┐
-                  ▼
-             BL-065
-       Paquete sustentación
-```
-
----
-
-# 10. Historias que pueden ejecutarse en paralelo
-
-Una vez terminadas las dependencias base, estas ramas pueden avanzar en paralelo `[INTERNO]`:
-
-```text
-Rama A — Monitoreo
-BL-004 → BL-010
-
-Rama B — Kubernetes
-BL-011 → BL-020
-
-Rama C — Seguridad
-BL-021 → BL-027
-
-Rama D — Observabilidad
-BL-028 → BL-031
-
-Rama E — Agentic
-BL-032 → BL-041
-
-Rama F — UI
-BL-042 → BL-045
-
-Rama G — GitOps
-BL-046 → BL-049
-```
-
-La integración completa debe esperar a que las historias necesarias de cada rama alcancen `DONE`.
-
----
-
-# 11. Definition of Done global
-
-Una historia se considera `DONE` cuando:
-
-```text
-[ ] Implementación versionada
-[ ] Criterios de aceptación cumplidos
-[ ] Prueba ejecutada
-[ ] Evidencia almacenada
-[ ] Sin secretos en Git/imágenes
-[ ] Documentación actualizada cuando aplique
-[ ] Dependencias resueltas
-[ ] No introduce una capacidad prohibida por el PRD
-```
-
-Para historias críticas de seguridad, además:
-
-```text
-[ ] Existe prueba negativa
-[ ] El control está impuesto técnicamente
-[ ] La evidencia puede reproducirse
-```
-
----
-
-# 12. Definition of Done del producto
-
-Sentinel puede considerarse listo para la sustentación cuando:
-
-```text
-✅ Kubernetes es parte central del workflow
-✅ Discovery funciona
-✅ Monitoring funciona
-✅ Traffic monitoring funciona
-✅ Baseline/comparación funciona
-✅ Reporte SH funciona
-✅ Jobs Kubernetes funcionan
-✅ Helm despliega el stack
-✅ RBAC mínimo funciona
-✅ can-i demuestra permisos
-✅ Pod Security funciona
-✅ NetworkPolicies funcionan
-✅ No existe acceso directo del agente a endpoints
-✅ No existe shell arbitrario
-✅ Tool Layer funciona
-✅ Agente funciona
-✅ Confirmación humana funciona
-✅ Rechazo funciona
-✅ Timeout/abandono no ejecuta
-✅ Recovery está limitado
-✅ Escalamiento funciona
-✅ Auditoría funciona
-✅ Grafana funciona
-✅ GitOps funciona
-✅ Rollback fue probado
-✅ Dataset de IA existe
-✅ Evaluación del agente existe
-✅ Red teaming existe
-✅ Prompt injection indirecto fue probado
-✅ ARP controlado fue ejecutado
-✅ Workflow sin IA fue ejecutado
-✅ Workflow con IA fue ejecutado
-✅ Métricas con/sin IA fueron calculadas
-✅ Paquete de sustentación está reproducible
-```
-
----
-
-# 13. Riesgos de backlog
-
-| Riesgo | Señal de alerta | Acción |
+| Módulo | Historias | Entregable visible |
 |---|---|---|
-| Agente se implementa antes del workflow determinista | Tool Layer necesita inventar operaciones | Bloquear E07 hasta completar E02/E03 |
-| RBAC queda para el final | Agente ya crea recursos antes de tener pruebas negativas | Detener ampliación de tools y completar E05 |
-| UI consume demasiado tiempo | Pantallas avanzan sin workflow funcional | Mantener UI mínima y priorizar BL-043 |
-| GitOps añade complejidad desproporcionada | El sistema funciona solo mediante administración manual | Mantener alcance de Argo CD en despliegue/rollback básico |
-| Reportes se vuelven narrativos | El LLM empieza a redactar la evidencia | Volver a BL-009/BL-016 y preservar script como fuente |
-| Evaluación se prepara después de construir el agente | No existe ground truth previo | Completar BL-050 antes de declarar agente listo |
-| ARP se interpreta como detección automática de ataque | La demo cambia el lenguaje del producto | Mantener BL-056/063 como validación adversarial observacional |
-| Modelo LLM bloquea arquitectura | Integración acoplada a un proveedor | Mantener BL-039 con adapter |
+| Linux, shell y redes | SN-001–005, SN-011–018 | Scripts, parser, modelos y pruebas |
+| Contenedores | SN-007, SN-042 | Imagen reproducible/no-root y escaneo |
+| Kubernetes / CKA | SN-006, SN-009, SN-010 | Namespaces, Jobs, Deployments, PVC |
+| CKAD / Helm | SN-008, SN-031 | Charts y values versionados |
+| Observabilidad | SN-019, SN-032–035 | Métricas, dashboards y reglas |
+| CKS / KCSA | SN-036–040 | RBAC, NetworkPolicy y capabilities acotadas |
+| CI/CD / GitOps | SN-041–043 | Pipeline y reconciliación |
+| Evaluación / sustentación | SN-044–047 | Ground truth, pruebas y demo |
 
----
+## 8. Fuera del backlog
 
-# 14. Decisiones pendientes que afectan el backlog
-
-| Decisión | Estado | Historias afectadas |
-|---|---|---|
-| Umbral exacto de tráfico | `[TBD]` | BL-007, BL-058 |
-| Modelo/proveedor LLM | `[TBD]` | BL-039 |
-| Persistencia de auditoría/reportes | `[TBD]` | BL-030, BL-046, BL-065 |
-| Fuente de métricas para Grafana | `[TBD]` | BL-031, BL-028 |
-| `apiGroups/resources/verbs` finales | `[TBD]` | BL-022, BL-023 |
-| Mecanismo de Secrets en Git | `[TBD]` | BL-049 |
-| Ingress/port-forward/NodePort | `[TBD]` | BL-042 |
-| StorageClass | `[TBD]` | Historias de persistencia cuando se cierre BL-030 |
-| Dataset final | `[TBD]` | BL-050 |
-| Targets cuantitativos de éxito | `[TBD]` | BL-058, BL-064 |
-| Requisitos regulatorios | `[VERIFICAR]` | Evolución posterior / fuera del núcleo del MVP |
-
----
-
-# 15. Evidencia mínima esperada por tipo de historia
-
-| Tipo | Evidencia mínima |
-|---|---|
-| Script | Salida reproducible + archivo generado |
-| Kubernetes | Manifest + `kubectl` + logs |
-| Helm | `helm lint/template/install` |
-| RBAC | Manifests + `kubectl auth can-i` |
-| NetworkPolicy | Prueba de conectividad positiva/negativa |
-| Agent Tool | Input + tool call + resultado |
-| Human approval | Registro de aprobación/rechazo |
-| Recovery | Logs de intentos y estado final |
-| Auditoría | Registro completo del workflow |
-| Grafana | Dashboard + ejecución que cambia métrica |
-| GitOps | Git commit + estado reconciliado + rollback |
-| IA | Dataset + resultado de evaluación |
-| Red teaming | Caso adversarial + resultado + evidencia |
-| Integración | Ejecución extremo a extremo |
-| Sustentación | Repositorio + guía + artefactos reproducibles |
-
----
-
-# 16. Trazabilidad PRD → Arquitectura → Backlog
-
-```text
-PRD
- │
- ├── Monitoreo determinista ───────────→ E02
- │
- ├── Kubernetes central ───────────────→ E03 / E04
- │
- ├── Frontera de autonomía ─────────────→ E05
- │
- ├── Observabilidad / auditoría ───────→ E06
- │
- ├── Agente + Tool Layer ──────────────→ E07
- │
- ├── Human-in-the-loop ────────────────→ E08
- │
- ├── GitOps ───────────────────────────→ E09
- │
- ├── Evaluación IA / red teaming ──────→ E10
- │
- └── Demo final ───────────────────────→ E11
-
-ARQUITECTURA
- │
- ├── Components / workloads ───────────→ BL-012–BL-020
- ├── RBAC / ServiceAccounts ───────────→ BL-021–BL-023
- ├── PSS / NetworkPolicy ──────────────→ BL-024–BL-025
- ├── Tool Layer ───────────────────────→ BL-032–BL-038
- ├── LLM adapter ──────────────────────→ BL-039
- ├── Observability ────────────────────→ BL-028–BL-031
- ├── GitOps ───────────────────────────→ BL-046–BL-049
- └── Verificación ─────────────────────→ BL-050–BL-058
-```
-
----
-
-# 17. Estado del backlog para el repositorio
-
-> **Todos los elementos de este documento representan backlog planificado.** La implementación real deberá actualizar estados, commits, evidencias y cualquier cambio de alcance.
-
-### Fuente de los requisitos
-
-- `prd.md` — especificación funcional aprobada de Sentinel.
-- `arquitectura.md` — arquitectura técnica aprobada de Sentinel.
-- Documento de curso `prompts-para-especificacion.md` — estructura exigida para el backlog.
-- `topicosespeciales.pdf` — módulos de Kubernetes, CKAD, CKS, GitOps y Agentic Engineering.
-
-### Regla final
-
-> **Una historia se considera terminada cuando existe una implementación reproducible y una evidencia verificable de que los criterios de aceptación se cumplen.**
-
+Quedan fuera de esta versión: administración o configuración remota de endpoints, bloqueo o contención de tráfico, remediación, gestión de cuentas/servicios/procesos, identificación o clasificación de amenazas, inteligencia de amenazas, escaneo de vulnerabilidades, parcheo, inspección de payloads y respuesta automática. Estas capacidades requieren una propuesta independiente y no forman parte del alcance aprobado de Sentinel.
