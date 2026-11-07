@@ -1,155 +1,67 @@
-# Análisis de mercado — monitoreo de activos y agentes de IA sobre Kubernetes
+# Análisis de mercado — monitoreo de activos de red
 
-> Documento de validación de mercado para Sentinel.  
-> Fecha de corte: 2026-09-21.  
-> Las cifras externas están enlazadas; las hipótesis propias están marcadas `[INTERNO]`.
+**Fecha de consulta:** 2026-11-05  
+**Estado:** exploración competitiva; no constituye validación de demanda.
 
-## 1. El mercado que se cita cuando se quiere convencer
+## 1. Conclusión ejecutiva
 
-En vez de inventar una cifra única de mercado, conviene utilizar señales de adopción verificables del ecosistema donde Sentinel operaría.
+El dominio de descubrimiento de activos, monitoreo de red, métricas y alertas está ampliamente cubierto por herramientas open source y comerciales. Sentinel no presenta una categoría nueva ni una ventaja defendible demostrada. Su oportunidad más razonable, por ahora, es como **prototipo académico reproducible** que integra un subconjunto de estas capacidades sobre Kubernetes.
 
-| Cifra | Valor | Horizonte | Fuente |
-|---|---:|---|---|
-| Organizaciones cloud-native encuestadas que reportaron adopción de técnicas cloud-native | 98% | Encuesta 2025, publicada 2026 | CNCF |
-| Usuarios de contenedores que ejecutan Kubernetes en producción | 82% | Encuesta 2025, publicada 2026 | CNCF |
-| Organizaciones que alojan IA generativa y usan Kubernetes para alguna parte de inferencia | 66% | Encuesta 2025, publicada 2026 | CNCF |
-| Seguridad entre desafíos de cargas de datos cloud-native | 72% | Investigación publicada 2025 | CNCF |
-| Observabilidad entre desafíos de cargas de datos cloud-native | 51% | Investigación publicada 2025 | CNCF |
+No se calcula TAM/SAM/SOM porque no existe una fuente específica validada que mida la demanda por una solución equivalente a Sentinel. No se estiman ingresos ni disposición a pagar.
 
-Fuentes:
-- https://www.cncf.io/reports/the-cncf-annual-cloud-native-survey/
-- https://www.cncf.io/blog/2025/08/02/what-500-experts-revealed-about-kubernetes-adoption-and-workloads/
+## 2. Alternativas y competidores
 
-**Interpretación:** estas cifras justifican que Kubernetes, seguridad y observabilidad son dominios relevantes. No demuestran que exista un mercado independiente para Sentinel.
+| Solución | Capacidades documentadas relevantes | Relación con Sentinel | Límite de la comparación |
+|---|---|---|---|
+| Zabbix | Descubrimiento por rangos IP, disponibilidad de servicios, componentes residentes y SNMP | Competidor directo en descubrimiento/monitoreo | Es una plataforma más amplia; revisar configuración y coste operativo real |
+| LibreNMS | Autodescubrimiento, escaneo SNMP, ARP y descubrimiento de vecinos | Competidor directo, especialmente para redes | Requiere credenciales SNMP y configuración apropiada |
+| Nagios XI | Hosts/servicios, checks por plugins, umbrales y notificaciones | Competidor directo en alertas y checks | Oferta comercial con más capacidades que el MVP |
+| Prometheus + Grafana | Series temporales, dashboards y reglas/alertas | Tecnología base/integración; no resuelve por sí sola toda la identificación de activos | Requiere exporters y fuentes de telemetría |
+| Wazuh | Inventario de hardware/software/puertos mediante un componente residente instalado en los endpoints | Alternativa adyacente, más orientada a seguridad de endpoints | El componente residente y la profundidad del inventario exceden el alcance del prototipo |
 
-## 2. La cifra que hay que poner en la misma diapositiva
+## 3. Qué parte del problema ya está resuelta
 
-La cifra de adopción debe acompañarse con una realidad competitiva incómoda: **el monitoreo y la gestión de activos ya tienen productos maduros, open source y comerciales**.
+- Zabbix dispone de descubrimiento de red configurable por rangos y disponibilidad de servicios/SNMP.
+- LibreNMS implementa métodos de autodescubrimiento, incluidos SNMP y ARP.
+- Nagios XI utiliza checks y umbrales explícitos para estados de hosts/servicios y notificaciones.
+- Prometheus y Grafana ofrecen infraestructura estándar de métricas, consultas, dashboards y alerting.
+- Wazuh ofrece inventario de endpoints mediante un componente residente instalado en los sistemas; esa modalidad de despliegue excede el alcance del prototipo.
 
-- Wazuh reporta más de 15 millones de endpoints protegidos, más de 100.000 usuarios empresariales y más de 30 millones de descargas anuales en su propia información corporativa.
-- Wazuh Cloud publica un precio inicial de USD 571/mes para hasta 100 agentes en su plan Small.
-- Nagios XI y SolarWinds NPM ya ofrecen monitoreo self-hosted, dashboards, alertas y comprobaciones periódicas.
-- Zabbix ofrece una plataforma de monitoreo open source que puede escalar desde redes pequeñas hasta miles de hosts.
+Por tanto, Sentinel no debe afirmar que inventó el descubrimiento, el monitoreo, las reglas o los dashboards.
 
-Estas cifras y capacidades muestran que Sentinel no puede basar su propuesta en "monitorizar redes" de forma genérica.
+## 4. Espacio hipotético de Sentinel
 
-Fuentes:
-- Wazuh, About us, consultado 2026-09-21.  
-  https://wazuh.com/about-us/
-- Wazuh Cloud, consultado 2026-09-21.  
-  https://wazuh.com/cloud/
-- Nagios XI, consultado 2026-09-21.  
-  https://www.nagios.com/products/nagios-xi/
-- SolarWinds NPM, consultado 2026-09-21.  
-  https://www.solarwinds.com/network-performance-monitor
-- Zabbix, consultado 2026-09-21.  
-  https://www.zabbix.com/documentation/current/es/manual/introduction
+El espacio inicial sería una implementación pequeña, self-hosted y acotada a:
+- topología de laboratorio o red local autorizada;
+- inventario visible por métodos de red;
+- atributos de activos (IP, MAC, SO con certeza, puertos y servicios);
+- telemetría de tráfico claramente definida;
+- un conjunto pequeño de reglas de alertas;
+- despliegue reproducible en Kubernetes con Helm y Grafana.
 
-## 3. Estructura competitiva
+Este espacio es una hipótesis de alcance, no una brecha competitiva confirmada.
 
-### Capa gratuita / open source
+## 5. Objeciones que debe superar
 
-| Producto | Posición funcional | Señal comercial verificable |
-|---|---|---|
-| Wazuh | Seguridad de endpoints, SIEM/XDR, inventario y monitoreo | Plataforma open source; además ofrece Wazuh Cloud de pago |
-| Zabbix | Monitoreo de infraestructura y redes | Open source; soporte y servicios empresariales |
+1. ¿Por qué no utilizar Zabbix o LibreNMS?
+2. ¿Por qué no usar Prometheus/Grafana con exporters y scripts propios?
+3. ¿Se justifica Kubernetes para una red de 10–50 activos?
+4. ¿Cómo obtiene el sensor visibilidad de la LAN sin permisos excesivos?
+5. ¿Qué aporta Sentinel si no instala software residente y no puede conocer con certeza el SO o software de cada endpoint?
+6. ¿Qué tasa de falsos positivos producen las reglas de ARP y tráfico?
 
-Wazuh puede hacer monitoreo agentless y detectar cambios en archivos, directorios, configuraciones o salidas de comandos. Esto se aproxima directamente al patrón "estado inicial + comprobación periódica + detección de cambio".
+## 6. Hipótesis ICP y riesgo de adopción
 
-Fuente Wazuh:
-https://documentation.wazuh.com/current/user-manual/capabilities/agentless-monitoring/how-it-works.html
+El segmento de 10–50 activos `[INTERNO]` puede ser demasiado pequeño para justificar una plataforma Kubernetes y, al mismo tiempo, demasiado complejo para un script aislado. Esta tensión debe medirse con entrevistas o pruebas de uso; no se asume que exista mercado suficiente.
 
-### Capa hyperscalers / plataformas gestionadas
+## 7. Datos no disponibles
 
-| Tipo | Posición |
-|---|---|
-| Plataformas cloud y observabilidad gestionada | Ofrecen monitorización, métricas, logs, automatización e integración a mayor escala |
+- TAM/SAM/SOM específicos: `[VERIFICAR]`.
+- Disposición a pagar: `[VERIFICAR]`.
+- Precio competitivo y coste total de operación: `[VERIFICAR]`.
+- Tasa real de adopción de self-hosted Kubernetes en el ICP: `[VERIFICAR]`.
+- Ventaja frente a Zabbix/LibreNMS/Nagios: `[VERIFICAR]`.
 
-No se toma una plataforma hyperscaler concreta como competidor directo porque el MVP de Sentinel está explícitamente planteado como **self-hosted en la red local del cliente**.
+## Fuentes
 
-### Capa comercial
-
-| Empresa / producto | Posición | Señal comercial verificable |
-|---|---|---|
-| Nagios XI | Monitoreo de infraestructura y red self-hosted | Prueba de 30 días y venta empresarial |
-| SolarWinds NPM | Network Performance Monitoring | Prueba de 30 días y precio por cotización |
-| LogicMonitor | Network traffic flow monitoring | Producto comercial con monitoreo NetFlow/IPFIX/sFlow y análisis de flujos |
-
-Fuentes:
-- https://www.nagios.com/products/nagios-xi/
-- https://www.solarwinds.com/network-performance-monitor
-- https://www.logicmonitor.com/support/network-traffic-flow-monitoring-new-ui
-
-## 4. Dónde queda el espacio
-
-El espacio hipotético de Sentinel es deliberadamente estrecho:
-
-> **Organizaciones con una red local de aproximadamente 10–50 activos, con un equipo de ciberseguridad que desea desplegar el sistema dentro de su propia infraestructura para monitorizar cambios en un conjunto definido de atributos y usar un agente de IA como orquestador de las operaciones de Kubernetes.** `[INTERNO]`
-
-El producto no intenta competir en amplitud con un SIEM/XDR completo ni con una suite empresarial de network performance monitoring.
-
-El MVP se centra en seis familias de información:
-
-1. IP
-2. MAC
-3. Sistema operativo
-4. Puertos
-5. Servicios
-6. Tráfico
-
-En tráfico, la definición adoptada es:
-
-- volumen en bytes por segundo;
-- IP origen y destino;
-- protocolo.
-
-El nuevo activo detectado automáticamente **no forma parte del MVP**. Se considera una evolución futura.
-
-## 5. El dolor operativo, con datos que resistieron la auditoría
-
-La evidencia disponible respalda que seguridad y observabilidad son retos relevantes en entornos cloud-native, pero no mide específicamente el dolor del ICP de Sentinel.
-
-El dolor que Sentinel formula es más estrecho:
-
-- pérdida de visibilidad sobre el estado actual de activos;
-- dificultad para saber cuándo una característica monitoreada cambió;
-- esfuerzo operacional para ejecutar de forma consistente las tareas de descubrimiento y monitoreo;
-- incorporación automática de nuevos activos como problema futuro, no resuelto en el MVP.
-
-La automatización mediante scripts es determinista; la IA se ubica por encima de ella como orquestador.
-
-Esto es coherente con el hecho de que Kubernetes expone una API y gestiona recursos como Pods y Jobs, mientras que Helm empaqueta y despliega recursos de Kubernetes mediante Charts.
-
-Fuentes:
-- Kubernetes API access, consultado 2026-09-21.  
-  https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/
-- Kubernetes Jobs, consultado 2026-09-21.  
-  https://kubernetes.io/docs/concepts/workloads/controllers/job/
-- Helm Charts, consultado 2026-09-21.  
-  https://helm.sh/docs/topics/charts/
-
-## 6. Riesgo geográfico y de segmento
-
-El diseño self-hosted reduce la dependencia del país como variable principal. La hipótesis es que una organización puede instalar el repositorio en su propia red, independientemente de su ubicación geográfica.
-
-Por eso, el beachhead no se fija todavía en Colombia, México, Brasil u otro país. `[INTERNO]`
-
-El principal riesgo de segmentación es técnico:
-
-- una organización puede tener solo 10–50 activos pero no tener capacidad para administrar Kubernetes;
-- puede preferir una solución gestionada;
-- puede requerir intervención directa sobre endpoints, algo que Sentinel no ofrece;
-- puede considerar suficientes sus herramientas actuales.
-
-Por tanto, la capacidad técnica del cliente para desplegar y operar una instalación self-hosted debe convertirse en una señal de calificación del ICP.
-
-## 7. Qué no se pudo verificar
-
-- `[VERIFICAR]` Tamaño monetario del segmento específico de Sentinel.
-- `[VERIFICAR]` Porcentaje de organizaciones con 10–50 activos que tienen un equipo de ciberseguridad formal.
-- `[VERIFICAR]` WTP (willingness to pay) por el componente de orquestación mediante IA.
-- `[VERIFICAR]` Tiempo operativo ahorrado frente a scripts + cron + una plataforma de monitoreo existente.
-- `[VERIFICAR]` Tasa de adopción de Kubernetes en organizaciones pequeñas con redes de 10–50 activos.
-- `[VERIFICAR]` Ventaja comercial sostenible del control humano por etapas frente a otras herramientas que también aplican permisos y automatización restringida.
-
-*Material de referencia — Tópicos Especiales en Informática*
+Ver `research/fuentes.md` para enlaces y fecha de consulta. La comparación anterior se limita a capacidades descritas por los propios proyectos/proveedores; no equivale a benchmark de rendimiento ni evaluación práctica.

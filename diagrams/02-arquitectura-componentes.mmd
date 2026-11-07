@@ -1,0 +1,24 @@
+flowchart TB
+  subgraph K8S[Clúster Kubernetes]
+    subgraph NS1[Namespace sentinel]
+      CORE[Sentinel Core<br/>API :8080 y métricas :9108]
+      DB[(SQLite en PVC)]
+      CORE --> DB
+      CORE -->|get/list/watch Pods, Jobs, CronJobs| KAPI[(Kubernetes API)]
+    end
+    DISC[Discovery CronJob / Job<br/>sentinel o sentinel-capture según POC]
+    SENSOR[Traffic Sensor<br/>sentinel o sentinel-capture según POC]
+    DISC -->|POST /internal/v1/discovery-observations :8080| CORE
+    SENSOR -->|POST /internal/v1/traffic-observations :8080| CORE
+    subgraph NS2[Namespace monitoring]
+      PROM[Prometheus]
+      AM[Alertmanager]
+      GRAF[Grafana]
+      PROM -->|evalúa PrometheusRule| AM
+      GRAF -->|PromQL| PROM
+    end
+    PROM -->|HTTP GET /metrics :9108, port metrics| CORE
+  end
+  CIDR[CIDR autorizado] --> DISC
+  FEED[Feed mirror / TAP / PCAP autorizado] --> SENSOR
+  AM -->|Receptor configurado| DEST[Correo / Webhook / TBD]

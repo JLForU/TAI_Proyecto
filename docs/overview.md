@@ -1,134 +1,120 @@
-# Panorama del dominio: monitoreo de activos y agentes de IA sobre Kubernetes
+# Panorama del dominio — descubrimiento y monitoreo de activos de red
 
-> Documento de contexto para el proyecto Sentinel.  
-> Fecha de investigación: 2026-09-21.  
-> Las afirmaciones externas se acompañan con fuente y fecha. Las hipótesis propias se marcan como `[INTERNO]`; lo que requiere validación adicional se marca como `[VERIFICAR]`.
+**Versión:** 3.0  
+**Fecha:** 2026-11-05
 
-## 1. Por qué ahora
+## 1. Dominio y propósito
 
-El contexto técnico es favorable para una solución que combine Kubernetes, monitoreo y automatización asistida por IA, pero eso no significa que exista automáticamente un espacio de mercado defendible.
+Sentinel pertenece al dominio de **network monitoring / asset discovery / observability**. Su finalidad es observar una red autorizada, construir un inventario de activos visibles, medir atributos de red y registrar condiciones que cumplan reglas predefinidas.
 
-La CNCF reportó en enero de 2026 que el 82% de los usuarios de contenedores encuestados ejecutan Kubernetes en producción, frente al 66% en 2023. El mismo estudio reportó que el 66% de las organizaciones que alojan modelos de IA generativa usan Kubernetes para parte o toda su inferencia. Esto muestra que Kubernetes ya es una capa operativa consolidada en muchas organizaciones, aunque no implica que todas ellas necesiten un agente para administrar redes o activos de usuario.
+El producto no es un SIEM completo, no es un NIDS generalista, no es un escáner de vulnerabilidades y no es una plataforma de gestión de endpoints.
 
-Fuente: CNCF, *The CNCF Annual Cloud Native Survey: The Infrastructure of AI’s Future*, 2026-01-20.  
-https://www.cncf.io/reports/the-cncf-annual-cloud-native-survey/
+## 2. Capacidades del sistema
 
-La agenda de CNCF para KubeCon + CloudNativeCon North America 2026 incorporó además un track específico de "AI Inference + Agentic", con temas de agentes, inferencia, observabilidad y operación sobre Kubernetes. Esto confirma que la convergencia entre IA y Kubernetes es un área activa del ecosistema. No demuestra, por sí sola, que un producto de monitoreo de activos tenga demanda comercial.
+1. Descubrimiento periódico de hosts en rangos autorizados.
+2. Recolección de IP y MAC cuando el método lo permita.
+3. Consulta acotada de puertos y servicios expuestos.
+4. Registro del sistema operativo declarado o inferido solo cuando un método habilitado produzca evidencia documentada; de lo contrario, `desconocido`. La huella activa mediante `-O` queda fuera del perfil inicial; sin un método de inferencia habilitado, el valor del MVP será declarado o desconocido.
+5. Medición de tráfico IP como bytes/s, IP origen, IP destino y protocolo.
+6. Observación separada de actividad ARP y cambios de asociaciones IP↔MAC.
+7. Persistencia de inventario, observaciones y eventos.
+8. Cálculo de condiciones deterministas en Core; Prometheus evalúa reglas temporales de alerta, Grafana presenta dashboards y Alertmanager administra notificaciones.
 
-Fuente: CNCF, 2026-08-10.  
-https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/
+## 3. Separación entre observación, evento y alerta
 
-## 2. Los proyectos open source y su estado real en la CNCF
+- **Observación:** dato derivado del sondeo o captura (por ejemplo, una respuesta ARP o una medición de bytes en una ventana).
+- **Evento:** registro normalizado de una transición o condición (por ejemplo, `ArpMappingChanged` o `AssetFirstSeen`).
+- **Alerta:** notificación generada cuando una métrica/evento satisface una regla configurada.
+- **Interpretación humana:** el operador determina si el evento responde a una operación legítima, una falla o actividad maliciosa.
 
-Sentinel no pretende sustituir el ecosistema Kubernetes; lo utiliza como capa de orquestación. Conviene distinguir entre proyectos que son parte del ecosistema cloud-native y productos de monitoreo de seguridad que compiten funcionalmente aunque no sean proyectos CNCF.
+Sentinel no convierte automáticamente una alerta en una conclusión sobre intención.
 
-| Proyecto / tecnología | Ecosistema | Qué aporta al dominio | Relación con Sentinel |
-|---|---|---|---|
-| Kubernetes | CNCF / núcleo del ecosistema | Orquestación de Pods y workloads | Infraestructura central del producto |
-| Helm | CNCF ecosystem / herramienta Kubernetes | Empaquetado y despliegue de recursos Kubernetes mediante Charts | Despliegue reproducible del stack |
-| Prometheus | CNCF | Recolección y consulta de métricas | Posible fuente de métricas, no diferencial por sí misma |
-| Grafana | Ecosistema cloud-native | Consulta, visualización y alertamiento de métricas/logs/traces | Capa visual |
-| OpenTelemetry | CNCF | Telemetría y observabilidad | Puede complementar observabilidad, fuera del MVP |
-| Wazuh | Open source, no producto CNCF | SIEM/XDR, inventario, monitoreo y detección | Competidor funcional adyacente |
-| Zabbix | Open source | Monitoreo de infraestructura y redes | Competidor funcional adyacente |
-| Nagios XI | Comercial | Monitoreo de infraestructura y redes | Competidor funcional adyacente |
-| SolarWinds NPM | Comercial | Monitoreo de rendimiento y tráfico de red | Competidor funcional adyacente |
+## 4. Modelo de datos observado
 
-Kubernetes define el Pod como su unidad desplegable mínima y recomienda normalmente gestionar Pods mediante recursos de workload en vez de administrarlos individualmente. Los Jobs, por su parte, permiten ejecutar tareas que terminan y reintentar Pods cuando fallan. Estas primitivas son suficientes para que Sentinel pueda crear, eliminar y controlar workloads de monitoreo sin inventar un orquestador propio.
-
-Fuentes:
-- Kubernetes, *Pods*, consultado 2026-09-21.  
-  https://kubernetes.io/docs/concepts/workloads/pods/
-- Kubernetes, *Jobs*, consultado 2026-09-21.  
-  https://kubernetes.io/docs/concepts/workloads/controllers/job/
-- Helm, *Charts*, consultado 2026-09-21.  
-  https://helm.sh/docs/topics/charts/
-- Grafana, documentación oficial, consultada 2026-09-21.  
-  https://grafana.com/docs/grafana/latest/
-
-## 3. El dinero: qué se está financiando
-
-No se encontró una fuente pública suficientemente homogénea para afirmar un tamaño de mercado específico para "agentes de IA que monitorizan activos de red". Por ello, el análisis no introduce un TAM/SAM/SOM inventado.
-
-Sí se observan modelos comerciales activos en categorías adyacentes:
-
-| Empresa / producto | Hecho comercial verificable | Lectura para Sentinel |
+| Grupo | Campos | Naturaleza |
 |---|---|---|
-| Wazuh Cloud | Plan Small desde USD 571/mes para hasta 100 agentes; Medium desde USD 923/mes; Large desde USD 1.467/mes | Existe disposición de pago por seguridad/monitorización gestionada, aunque el producto incluye muchas capacidades adicionales |
-| SolarWinds NPM | Producto comercial de monitoreo de red; precio mediante cotización y prueba de 30 días | El monitoreo de red empresarial es una categoría comercial consolidada |
-| Nagios XI | Producto comercial self-hosted; ofrece prueba de 30 días y modelo basado en hosts/servicios y funciones empresariales | El despliegue dentro de la infraestructura del cliente es un modelo establecido |
-| Zabbix | Open source con servicios empresariales y soporte comercial | El modelo open source + servicios es viable como referencia |
+| Identidad de red | IP, MAC | Observada, con tiempo, interfaz y sensor |
+| Sistema operativo | familia/versión | Declarada o inferida solo si un método habilitado aporta evidencia; en caso contrario, desconocida. Registrar método y certeza. |
+| Puertos | número, transporte, estado | Observados al momento del sondeo |
+| Servicios | protocolo, nombre de servicio y versión opcional | Identificados mediante sondas ligeras cuando hay respuesta; si solo existe correspondencia de puerto, se marca como probable; si no hay evidencia, `desconocido` |
+| Tráfico IP | bytes/s, IP origen, IP destino, protocolo | Agregado por ventana; conservar origen/destino en evento/log estructurado |
+| ARP | opcode, protocol source/destination, hardware source/destination | Observación de capa 2, separada de flujos IP |
+| Evento | id, regla, hora, activo, atributos y evidencia | Determinista |
 
-Fuentes:
-- Wazuh Cloud, pricing, consultado 2026-09-21.  
-  https://wazuh.com/cloud/
-- SolarWinds NPM, consultado 2026-09-21.  
-  https://www.solarwinds.com/network-performance-monitor
-- Nagios XI, consultado 2026-09-21.  
-  https://www.nagios.com/products/nagios-xi/
-- Zabbix, introducción oficial, consultada 2026-09-21.  
-  https://www.zabbix.com/documentation/current/es/manual/introduction
+Las direcciones IP de origen/destino se conservan en los registros estructurados. No se convierten de forma indiscriminada en labels Prometheus porque cada combinación de labels crea una serie temporal y las dimensiones de alta cardinalidad aumentan el volumen almacenado.
 
-## 4. Lo que hacen los hyperscalers
+## 5. Métodos de recolección y límites
 
-Los hyperscalers y plataformas de observabilidad tienden a competir mediante servicios gestionados, telemetría centralizada, integración con múltiples fuentes y automatización operativa.
+### 5.1 Descubrimiento activo
 
-Para Sentinel esto tiene una consecuencia importante: **"usar IA para operar infraestructura" no puede tratarse como diferenciador suficiente**. El espacio propio del proyecto debe definirse por la combinación concreta de:
+- ARP dentro del mismo segmento de capa 2.
+- ICMP/TCP para verificar disponibilidad según la política del laboratorio.
+- Nmap con TCP connect scan (`-sT`), detección ligera de servicio/versión (`-sV --version-light`) y salida XML para procesamiento (`-oX -`), limitado a puertos TCP autorizados. `-sV` envía sondas de aplicación a los puertos abiertos; por eso se trata como sondeo activo y requiere autorización explícita, allowlist, límite de tasa y timeout. Si no hay respuesta suficiente, el servicio o su versión quedan como desconocidos; el nombre deducido solo por número de puerto se marca como probable, no como observado. El sondeo UDP, los scripts NSE (`-sC`/`--script`), el modo agresivo (`-A`) y la detección de SO mediante `-O` quedan fuera del MVP.
+- SNMP de solo lectura para dispositivos de red compatibles, si existe una cuenta autorizada; se plantea como mejora posterior.
 
-- despliegue self-hosted dentro de la red del cliente;
-- foco en un conjunto acotado de activos;
-- monitoreo basado en estado y cambios;
-- orquestación operacional mediante Kubernetes;
-- agente de IA restringido a Kubernetes y herramientas autorizadas;
-- prohibición explícita de ejecutar acciones directamente sobre los activos.
+Todo sondeo activo genera tráfico y puede aumentar carga o aparecer en los logs del objetivo. “Solo lectura” significa que Sentinel no modifica configuración ni estado administrativo del endpoint; no significa que el sondeo sea pasivo o sin impacto. Debe existir autorización explícita sobre rangos, puertos, horario e intensidad, con límites de tasa y timeout.
 
-Este posicionamiento es una hipótesis de producto, no una ventaja competitiva ya demostrada. `[INTERNO]`
+### 5.2 Captura de tráfico
 
-## 5. La tensión central de la categoría
+Se requiere que el sensor reciba tráfico del segmento de interés. Puede lograrse mediante red virtual de laboratorio, mirror/SPAN, TAP o interfaz de captura asignada. Un Pod ordinario no ve automáticamente el tráfico de todos los dispositivos externos. La lectura de sockets `RAW/PACKET` puede requerir `CAP_NET_RAW`; cambiar una interfaz a modo promiscuo puede requerir `CAP_NET_ADMIN`. No se concederán ambas por defecto: el POC debe determinar la necesidad exacta y mantener la captura separada de la administración de interfaces.
 
-La tensión central no es únicamente "IA versus automatización". Es:
+La captura se limita a metadatos requeridos: protocolo, direcciones, bytes y campos ARP. Para tráfico IP, `packet_length_bytes` se calcula con la longitud de capa IP (IPv4 `total_length`; IPv6 longitud de payload más la cabecera base), excluyendo la cabecera Ethernet; `bytes_per_second` es la suma de esas longitudes dividida por la duración efectiva de la ventana. ARP se contabiliza como mensajes/s y no se mezcla con bytes/s de flujos IP. El MVP no almacena payloads completos.
 
-> **¿La inteligencia operacional aporta suficiente valor frente a scripts deterministas y herramientas de monitoreo maduras, especialmente en redes pequeñas de 10–50 activos?**
+### 5.3 Identificación de SO
 
-El monitoreo de red ya es una categoría madura. Zabbix monitoriza parámetros de redes e infraestructura, almacena históricos y permite automatizar respuestas. Nagios XI ejecuta comprobaciones a intervalos y compara resultados contra rangos definidos. SolarWinds NPM monitoriza disponibilidad, tráfico, rendimiento, genera alertas y puede utilizar líneas base históricas. Wazuh ofrece inventario, monitoreo, detección y, en modalidad agentless, puede ejecutar comandos y detectar cambios en su salida.
+Nmap puede inferir el SO mediante huellas TCP/IP, pero `-O` requiere privilegios para operaciones con paquetes crudos; por ello no se habilita en el perfil inicial de menor privilegio. Si una prueba posterior autoriza y aísla esos permisos, el resultado seguirá siendo una inferencia y deberá guardarse con método y nivel de certeza. Sin esa modalidad, se conserva `desconocido` salvo evidencia observada o declarada en el laboratorio. La ausencia de resultado no equivale a un error del activo.
 
-Fuentes:
-- Zabbix, documentación oficial, consultada 2026-09-21.  
-  https://www.zabbix.com/documentation/current/es/manual/introduction
-- Nagios XI, consultado 2026-09-21.  
-  https://www.nagios.com/products/nagios-xi/
-- SolarWinds NPM, consultado 2026-09-21.  
-  https://www.solarwinds.com/network-performance-monitor
-- Wazuh agentless monitoring, consultado 2026-09-21.  
-  https://documentation.wazuh.com/current/user-manual/capabilities/agentless-monitoring/how-it-works.html
+### 5.4 Acceso por permisos
 
-Por tanto, el agente de Sentinel debe justificarse por la **orquestación de las operaciones**, no por reemplazar la lógica determinista de monitorización.
+- La consulta SNMP debe utilizar credenciales de lectura; preferir SNMPv3 cuando el dispositivo lo soporte.
+- Los métodos remotos con credenciales (SSH/WinRM/WMI) no hacen parte del MVP inicial; si se exploran después, deberán tener cuentas de lectura.
+- No se instala software residente en los endpoints para esta versión.
 
-## 6. Contexto macro: adopción cloud-native y observabilidad
+## 6. Eventos y alertas previstos
 
-En la encuesta cloud-native publicada por CNCF en enero de 2026:
+### Eventos registrados
 
-- 82% de los usuarios de contenedores reportaron Kubernetes en producción.
-- 98% de las organizaciones encuestadas reportaron haber adoptado técnicas cloud-native.
-- 66% de las organizaciones que alojan modelos de IA generativa usan Kubernetes para alguna parte de su inferencia.
+- `AssetFirstSeen`: activo visible que no figuraba en un ciclo exitoso anterior.
+- `AssetMissing`: activo esperado que deja de responder durante un número configurable de ciclos exitosos.
+- `PortServiceChanged`: cambio observado en puertos/servicios.
+- `ArpMappingChanged`: cambio temporal observado en la asociación IP↔MAC.
+- `TrafficWindowObserved`: medición de tráfico agregada por ventana.
+- `SensorUnavailable`: el Traffic Sensor no envía latidos/ventanas dentro del intervalo esperado.
+- `DiscoveryCycleFailed`: un Job de descubrimiento falla o cubre parcialmente el alcance; se registra sin alerta por defecto.
 
-La misma investigación señala que, en 2025, las organizaciones identificaron seguridad como una de las dificultades relevantes de los entornos cloud-native. Otra publicación de CNCF basada en su investigación reportó seguridad (72%) y observabilidad (51%) entre los principales desafíos para cargas de datos intensivas en entornos cloud-native.
+No se registran ausencias cuando el ciclo de descubrimiento falló o cubrió parcialmente el alcance: el inventario debe distinguir “no observado” de “no disponible”.
 
-Estas cifras describen el ecosistema cloud-native general y **no deben presentarse como evidencia directa de demanda por Sentinel**.
+### Alertas MVP
 
-Fuentes:
-- CNCF Annual Cloud Native Survey, 2026-01-20.  
-  https://www.cncf.io/reports/the-cncf-annual-cloud-native-survey/
-- CNCF, *What 500+ Experts Revealed About Kubernetes Adoption and Workloads*, 2025-08-02.  
-  https://www.cncf.io/blog/2025/08/02/what-500-experts-revealed-about-kubernetes-adoption-and-workloads/
+- `TrafficThresholdExceeded`: tasa de bytes/s superior al criterio configurado.
+- `ArpRateThresholdExceeded`: frecuencia de mensajes ARP superior al criterio configurado.
+- `ArpMappingChanged`: variación de la asociación IP↔MAC que requiere revisión.
+- `SensorUnavailable`: falta de telemetría del Traffic Sensor; no se reutiliza para fallos de Jobs de descubrimiento.
 
-## 7. Qué NO se pudo verificar
+La primera aparición de host y los cambios de puertos/servicios quedan en el inventario/eventos; no generan alerta por defecto en el MVP.
 
-- `[VERIFICAR]` Tamaño mundial del mercado específicamente definido como "agentes de IA para monitoreo de activos de red".
-- `[VERIFICAR]` Número de organizaciones que combinarían exactamente Kubernetes + self-hosted + ciberseguridad + 10–50 activos.
-- `[VERIFICAR]` Disposición de pago del segmento objetivo de Sentinel.
-- `[VERIFICAR]` Ventaja cuantificable de usar un agente de IA frente a una automatización clásica en el caso de redes pequeñas.
-- `[VERIFICAR]` Reducción concreta de tiempo operativo atribuible al agente.
-- `[VERIFICAR]` Diferenciación sostenible frente a Wazuh, Zabbix, Nagios, SolarWinds y herramientas construidas internamente.
+## 7. Escenario de validación ARP
 
-*Material de referencia — Tópicos Especiales en Informática*
+En un laboratorio aislado, los dos dispositivos Android, el equipo macOS y el equipo Windows consultan la página HTTP del servidor Linux. Se incorpora temporalmente un sexto activo de prueba que genera actividad ARP controlada y una asociación IP↔MAC distinta para la IP del servidor. El sensor debe registrar el aumento de mensajes ARP y el cambio observado, con marcas de tiempo. La prueba busca mostrar la secuencia y su latencia aproximada, no demostrar detección general de suplantación ARP.
+
+El tráfico de prueba lo genera un equipo externo a Sentinel; Sentinel no lo produce ni modifica tablas ARP.
+
+## 8. Restricciones de alcance
+
+- Sin clasificación de amenazas ni inteligencia de amenazas.
+- Sin controles preventivos o de respuesta aplicados a los activos observados: no hay bloqueo, cuarentena, remediación ni parcheo. Se mantienen RBAC, aislamiento y endurecimiento para los componentes internos de Sentinel.
+- Sin gestión de cuentas, software o configuración de endpoints.
+- Sin inspección ni almacenamiento de payload en el MVP.
+- Sin promesa de identificación exacta de todos los SO o dispositivos.
+- Sin garantía de detección general de DDoS, ARP spoofing o cualquier otra familia de ataques.
+
+## 9. Supuestos no validados
+
+- `[INTERNO]` Segmento objetivo de 10–50 activos.
+- `[INTERNO]` Cinco activos base para la demostración, más un activo de prueba temporal.
+- `[INTERNO]` Agregación de tráfico cada 5 segundos.
+- `[INTERNO]` Cinco muestras separadas por 5 segundos para la línea base inicial.
+- `TBD` método de acceso al tráfico físico.
+- `TBD` intervalo de descubrimiento y límites de tasa.
+- `TBD` umbrales y regla estadística final.
+- `TBD` retención de logs y datos de inventario.

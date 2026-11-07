@@ -1,0 +1,48 @@
+flowchart LR
+  subgraph LAN[Red autorizada de laboratorio]
+    A1[Android 1]
+    A2[Android 2]
+    MAC[macOS]
+    WIN[Windows]
+    LNX[Servidor Linux HTTP]
+    TEST[Activo temporal de prueba]
+    SW[Switch / bridge]
+    A1 -->|HTTP| LNX
+    A2 -->|HTTP| LNX
+    MAC -->|HTTP| LNX
+    WIN -->|HTTP| LNX
+    A1 --- SW
+    A2 --- SW
+    MAC --- SW
+    WIN --- SW
+    LNX --- SW
+    TEST --- SW
+    MIR[Mirror / SPAN / TAP / feed]
+    SW --> MIR
+  end
+  subgraph K8S[Clúster Kubernetes]
+    subgraph SENT[Namespace sentinel]
+      DISC[Discovery CronJob / Job]
+      CORE[Sentinel Core]
+      DB[(SQLite / PVC)]
+      DISC -->|Observaciones| CORE
+      CORE --> DB
+    end
+    SENSOR[Traffic Sensor<br/>namespace según POC]
+    SENSOR -->|Metadatos IP y ARP| CORE
+    subgraph MON[Namespace monitoring]
+      PROM[Prometheus]
+      AM[Alertmanager]
+      GRAF[Grafana]
+      PROM -->|alertas evaluadas| AM
+      GRAF -->|PromQL| PROM
+    end
+    PROM -->|HTTP GET /metrics| CORE
+  end
+  DISC <-->|Sondeos / respuestas autorizados| A1
+  DISC <-->|Sondeos / respuestas autorizados| A2
+  DISC <-->|Sondeos / respuestas autorizados| MAC
+  DISC <-->|Sondeos / respuestas autorizados| WIN
+  DISC <-->|Sondeos / respuestas autorizados| LNX
+  MIR --> SENSOR
+  AM -->|Solo si se configura| EXT[Receptor externo]
