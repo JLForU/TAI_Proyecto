@@ -1,0 +1,49 @@
+[
+  {
+    "type": "ip",
+    "observed_at": "2026-11-19T12:00:01+00:00",
+    "interface": "eth0",
+    "protocol": "tcp",
+    "src_ip": "10.0.0.1",
+    "dst_ip": "10.0.1.1",
+    "packet_length_bytes": 100
+  },
+  {
+    "type": "ip",
+    "observed_at": "2026-11-19T12:00:02+00:00",
+    "interface": "eth0",
+    "protocol": "tcp",
+    "src_ip": "10.0.0.2",
+    "dst_ip": "10.0.1.1",
+    "packet_length_bytes": 200
+  },
+  {
+    "type": "ip",
+    "observed_at": "2026-11-19T12:00:03+00:00",
+    "interface": "eth0",
+    "protocol": "udp",
+    "src_ip": "10.0.0.3",
+    "dst_ip": "10.0.1.2",
+    "packet_length_bytes": 50
+  },
+  {
+    "type": "arp",
+    "observed_at": "2026-11-19T12:00:01+00:00",
+    "interface": "eth0",
+    "opcode": 1,
+    "psrc": "10.0.0.1",
+    "pdst": "10.0.0.99",
+    "hwsrc": "aa:bb:cc:dd:ee:01",
+    "hwdst": "ff:ff:ff:ff:ff:ff"
+  },
+  {
+    "type": "arp",
+    "observed_at": "2026-11-19T12:00:04+00:00",
+    "interface": "eth0",
+    "opcode": 2,
+    "psrc": "10.0.0.99",
+    "pdst": "10.0.0.1",
+    "hwsrc": "aa:bb:cc:dd:ee:99",
+    "hwdst": "aa:bb:cc:dd:ee:01"
+  }
+]

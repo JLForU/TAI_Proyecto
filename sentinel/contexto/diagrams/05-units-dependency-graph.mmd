@@ -1,0 +1,15 @@
+flowchart TD
+  U1[U1 Base y contratos] --> U2[U2 Kubernetes y empaquetado]
+  U2 --> U3[U3 Descubrimiento]
+  U2 --> U4[U4 Sensor de tráfico]
+  U2 --> U7[U7 Observabilidad]
+  U2 --> U8[U8 Seguridad]
+  U3 --> U5[U5 Inventario e historial]
+  U3 --> U8
+  U4 --> U5
+  U4 --> U7
+  U4 --> U8
+  U5 --> U6[U6 Condiciones deterministas]
+  U6 --> U7
+  U7 --> U9[U9 Entrega y validación]
+  U8 --> U9

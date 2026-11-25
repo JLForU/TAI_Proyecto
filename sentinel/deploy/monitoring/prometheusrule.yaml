@@ -1,0 +1,29 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sentinel-observability-rules
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: sentinel.alerts.implemented
+      rules:
+        - alert: TrafficThresholdExceeded
+          expr: max_over_time(sentinel_traffic_threshold_exceeded[1m]) > 0
+          for: 10s
+          labels:
+            severity: warning
+            rule: R-01
+          annotations:
+            summary: "Umbral de tráfico excedido tras ventana de línea base (GT-04)"
+            description: "Se detectó tráfico por encima del umbral configurado en Sentinel."
+        - alert: SensorUnavailable
+          expr: min_over_time(sentinel_collector_up[30s]) == 0
+          for: 15s
+          labels:
+            severity: critical
+            rule: R-04
+          annotations:
+            summary: "Sensor o colector de telemetría no disponible (GT-05)"
+            description: "No hay señal activa del colector de tráfico/observación durante la ventana configurada."

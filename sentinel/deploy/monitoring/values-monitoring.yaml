@@ -1,0 +1,18 @@
+grafana:
+  enabled: true
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+alertmanager:
+  enabled: true
+  config:
+    route:
+      receiver: "webhook-demo"
+      group_by: ["alertname", "rule"]
+    receivers:
+      - name: "webhook-demo"
+        # ST-M7-06 (documented-only): reemplazar url con endpoint de laboratorio (p. ej. webhook.site).
+        webhook_configs:
+          - url: "http://example-webhook.invalid/sentinel-alerts"
+            send_resolved: true

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es" data-theme="sentinel">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sentinel{% endblock %}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/tailwind.min.css">
+  <link rel="stylesheet" href="/static/css/daisyui.min.css">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="min-h-screen bg-base-200">
+  <nav class="navbar bg-primary text-primary-content mb-6 shadow">
+    <div class="flex-1 px-2 gap-1">
+      <a class="btn btn-ghost text-lg font-bold" href="/ui/assets">Sentinel</a>
+      <a class="btn btn-sm" href="/ui/assets" id="nav-assets">Inventario</a>
+      <a class="btn btn-sm" href="/ui/events" id="nav-events">Eventos</a>
+      <a class="btn btn-sm" href="/ui/alerts" id="nav-alerts">Alertas</a>
+      <a class="btn btn-sm" href="/ui/health" id="nav-health">Salud</a>
+      <a class="btn btn-sm" href="/ui/discovery" id="nav-discovery">Discovery</a>
+      <a class="btn btn-sm" href="/ui/report" id="nav-report">Reporte</a>
+    </div>
+    <div class="flex-none">
+      <a class="btn btn-sm btn-outline" href="/api/v1/export?format=csv" id="nav-export">Export CSV</a>
+    </div>
+  </nav>
+  <main class="container mx-auto px-4 pb-10">
+    {% block content %}{% endblock %}
+  </main>
+  <script src="/static/js/htmx.min.js"></script>
+  <script src="/static/js/discovery.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "title": "Sentinel Network Observability (FR-OBS-04)",
+  "panels": [
+    {"id": 1, "title": "Asset Inventory", "query": "sentinel_assets_total"},
+    {"id": 2, "title": "Traffic Baselines & Throughput", "query": "sentinel_traffic_bytes_per_second"},
+    {"id": 3, "title": "Alerts & Threshold State", "query": "sentinel_traffic_threshold_exceeded"},
+    {"id": 4, "title": "Sensor Health", "query": "sentinel_collector_up"}
+  ]
+}

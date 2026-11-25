@@ -1,0 +1,37 @@
+/* Ajustes propios sobre Tailwind/DaisyUI vendorizados (BR-U3-27/28). */
+
+.timeline-item {
+  border-left: 3px solid hsl(var(--bc, 0 0% 40%));
+  padding-left: 0.75rem;
+  margin-left: 0.25rem;
+}
+
+.badge-severity-critical {
+  background-color: #b91c1c;
+  color: #fff;
+}
+
+.badge-severity-warning {
+  background-color: #d97706;
+  color: #fff;
+}
+
+.badge-severity-info {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.badge-state-firing {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+.badge-state-resolved {
+  background-color: #16a34a;
+  color: #fff;
+}
+
+.report-md {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+}

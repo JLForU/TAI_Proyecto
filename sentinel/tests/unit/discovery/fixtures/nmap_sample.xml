@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<nmaprun scanner="nmap" args="nmap -sT -sV --version-light -p 22,80,443 -oX - 192.168.1.10 192.168.1.11">
+  <host>
+    <status state="up" reason="syn-ack"/>
+    <address addr="192.168.1.10" addrtype="ipv4"/>
+    <address addr="aa:bb:cc:dd:ee:0a" addrtype="mac" vendor="lab"/>
+    <hostnames><hostname name="lab-host-10" type="user"/></hostnames>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack"/>
+        <service name="ssh" product="OpenSSH" version="9.0" method="probed" conf="10"/>
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack"/>
+        <service name="http" method="table" conf="3"/>
+      </port>
+      <port protocol="tcp" portid="443">
+        <state state="closed" reason="reset"/>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="syn-ack"/>
+    <address addr="192.168.1.11" addrtype="ipv4"/>
+    <hostnames><hostname name="lab-host-11" type="user"/></hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack"/>
+        <service name="https" version="nginx" method="probed" conf="10"/>
+      </port>
+    </ports>
+  </host>
+</nmaprun>

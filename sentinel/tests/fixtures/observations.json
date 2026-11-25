@@ -1,0 +1,44 @@
+{
+  "items": [
+    {
+      "source": "discovery",
+      "observed_at": "2026-11-11T10:00:00+00:00",
+      "ip": "10.0.0.10",
+      "mac": "AA:BB:CC:DD:EE:01",
+      "hostname": "workstation-01",
+      "method": "arp",
+      "os_name": null,
+      "os_provenance": "unknown",
+      "ports": [
+        {"port": 22, "protocol": "tcp", "state": "open", "service": "ssh"},
+        {"port": 80, "protocol": "tcp", "state": "open", "service": "http"}
+      ]
+    },
+    {
+      "source": "traffic",
+      "observed_at": "2026-11-11T10:00:05+00:00",
+      "window_start": "2026-11-11T10:00:00+00:00",
+      "window_end": "2026-11-11T10:00:05+00:00",
+      "interface": "eth0",
+      "protocol": "tcp",
+      "packet_length_bytes": 512,
+      "bytes_per_second": 204.8,
+      "packets": 12,
+      "flows": 2,
+      "pairs": [
+        {"src_ip": "10.0.0.10", "dst_ip": "10.0.0.20"},
+        {"src_ip": "10.0.0.10", "dst_ip": "10.0.0.30"}
+      ]
+    },
+    {
+      "source": "arp",
+      "observed_at": "2026-11-11T10:00:02+00:00",
+      "interface": "eth0",
+      "opcode": 1,
+      "psrc": "10.0.0.10",
+      "pdst": "10.0.0.20",
+      "hwsrc": "aa:bb:cc:dd:ee:01",
+      "hwdst": "ff:ff:ff:ff:ff:ff"
+    }
+  ]
+}

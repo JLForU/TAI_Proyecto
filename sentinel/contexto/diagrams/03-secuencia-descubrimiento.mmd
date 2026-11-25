@@ -1,0 +1,19 @@
+sequenceDiagram
+  participant K as Kubernetes CronJob
+  participant D as Discovery Worker
+  participant N as Red autorizada
+  participant C as Sentinel Core
+  participant DB as SQLite/PVC
+  participant P as Prometheus
+  K->>D: Ejecuta ciclo programado
+  D->>N: ARP/ICMP y Nmap -sT -sV --version-light -p allowlist -oX -
+  N-->>D: Respuestas de host/puerto/servicio; algunas pueden ser inconclusas
+  D->>C: POST lote + cobertura + estado :8080
+  C->>C: Valida y normaliza observaciones
+  alt Ciclo completo y exitoso
+    C->>DB: Persiste y compara inventario
+  else Ciclo fallido o parcial
+    C->>DB: Registra DiscoveryCycleFailed
+    Note over C,DB: No generar AssetMissing por ciclo incompleto
+  end
+  P->>C: GET /metrics :9108 (scrape pull)

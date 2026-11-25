@@ -1,0 +1,25 @@
+{% if message %}
+<div class="alert alert-warning shadow-sm mb-4" id="discovery-message" data-status="{{ message_status or "" }}">
+  <span>{{ message }}</span>
+</div>
+{% endif %}
+
+{% if run %}
+<div class="card bg-base-100 shadow" id="discovery-status" data-run-id="{{ run.run_id }}" data-status="{{ run.status }}">
+  <div class="card-body">
+    <h2 class="card-title">Estado del ciclo</h2>
+    <div class="flex items-center gap-3 flex-wrap text-sm">
+      <span data-role="badge" class="badge badge-info">{{ run.status }}</span>
+      <span>run: <code>{{ run.run_id }}</code></span>
+      <span>hosts: <strong data-role="hosts_seen">{{ run.hosts_seen if run.hosts_seen is not none else "—" }}</strong></span>
+      <span>inicio: {{ run.started_at }}</span>
+      <span data-role="finished_at">{{ run.finished_at or "" }}</span>
+      <span data-role="error" class="text-error">{{ run.error or "" }}</span>
+    </div>
+    <p data-role="poll-message" class="hidden text-warning text-sm mt-2"></p>
+    <div class="card-actions mt-2">
+      <a data-role="retry" class="hidden btn btn-sm" href="/ui/discovery">Reintentar</a>
+    </div>
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sentinel
+description: Deterministic network asset monitoring platform on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

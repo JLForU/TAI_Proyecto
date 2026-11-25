@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Eventos · Sentinel{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Línea de tiempo</h1>
+
+<form method="get" action="/ui/events" class="grid gap-2 md:grid-cols-5 mb-6 bg-base-100 p-4 rounded-box shadow" id="events-filters">
+  <label class="form-control">
+    <span class="label-text text-sm">asset_id</span>
+    <input class="input input-bordered input-sm" name="asset_id" value="{{ filters.asset_id }}">
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">severity</span>
+    <select class="select select-bordered select-sm" name="severity">
+      <option value="">todas</option>
+      {% for s in ["info", "warning", "critical"] %}
+      <option value="{{ s }}" {% if filters.severity == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">rule</span>
+    <input class="input input-bordered input-sm" name="rule" value="{{ filters.rule }}">
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">from</span>
+    <input class="input input-bordered input-sm" type="date" name="from" value="{{ filters.from }}">
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">to</span>
+    <input class="input input-bordered input-sm" type="date" name="to" value="{{ filters.to }}">
+  </label>
+  <div class="md:col-span-5 flex gap-2">
+    <button class="btn btn-sm btn-primary" type="submit">Filtrar</button>
+    <a class="btn btn-sm" href="/api/v1/export?format=csv{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}">Export CSV</a>
+    <a class="btn btn-sm" href="/api/v1/export?format=json{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}">Export JSON</a>
+  </div>
+</form>
+
+{% if entries.items | length == 0 %}
+  <div class="alert shadow-sm"><span>Sin eventos ni alertas para este rango.</span></div>
+{% else %}
+  <ul class="list-none" id="timeline">
+    {% for e in entries.items %}
+    <li class="timeline-item mb-3 bg-base-100 p-3 rounded shadow-sm">
+      <div class="flex items-center gap-2 flex-wrap">
+        {% if e.kind == "alert" %}
+          <span class="badge badge-sm {{ 'badge-state-firing' if e.severity_or_state == 'firing' else 'badge-state-resolved' }}">{{ e.severity_or_state }}</span>
+        {% else %}
+          <span class="badge badge-sm badge-severity-{{ e.severity_or_state }}">{{ e.severity_or_state }}</span>
+        {% endif %}
+        <span class="badge badge-outline badge-sm">{{ e.kind }}</span>
+        <strong>{{ e.title }}</strong>
+        <span class="text-sm opacity-70">{{ e.when }}</span>
+        {% if e.resolved_at %}<span class="text-sm opacity-70">resuelto: {{ e.resolved_at }}</span>{% endif %}
+      </div>
+      <div class="text-sm mt-1">
+        {% if e.asset_id %}<a class="link" href="/ui/assets/{{ e.asset_id }}">{{ e.asset_id }}</a> · {% endif %}
+        {% if e.rule %}rule={{ e.rule }} · {% endif %}
+        {{ e.detail }}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<nav class="flex items-center gap-3 mt-4" id="events-pagination">
+  {% if entries.has_prev %}
+    <a class="btn btn-sm" href="?page={{ entries.page - 1 }}&asset_id={{ filters.asset_id }}&severity={{ filters.severity }}&rule={{ filters.rule }}&from={{ filters.from }}&to={{ filters.to }}">Anterior</a>
+  {% endif %}
+  <span class="text-sm">Página {{ entries.page }} / {{ entries.pages }} · {{ entries.total }} entradas</span>
+  {% if entries.has_next %}
+    <a class="btn btn-sm" href="?page={{ entries.page + 1 }}&asset_id={{ filters.asset_id }}&severity={{ filters.severity }}&rule={{ filters.rule }}&from={{ filters.from }}&to={{ filters.to }}">Siguiente</a>
+  {% endif %}
+</nav>
+{% endblock %}

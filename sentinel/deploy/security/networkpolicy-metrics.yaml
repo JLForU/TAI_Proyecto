@@ -1,0 +1,21 @@
+# Política mínima de red para scraping de métricas (ID-U7-07 / FR-SEC-01).
+# ST-M9-02: política mínima implementada; default-deny avanzado y EN-04 (image scan) documentados.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape-9108
+  namespace: sentinel
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: sentinel-core
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9108

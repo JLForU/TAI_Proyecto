@@ -1,0 +1,25 @@
+# ServiceMonitor del Core (U7, Q7=A, BR-U7-19/20/21).
+#
+# Aplicación fuera de banda (kubectl apply -f), NO vía Helm/umbrella de U8:
+#   kubectl apply -f deploy/monitoring/servicemonitor.yaml
+#
+# Requiere el Service del Core con el puerto nombrado "metrics" (9108) y el
+# label app.kubernetes.io/name: sentinel-core; el Prometheus Operator debe
+# seleccionar ServiceMonitors con label release: monitoring.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sentinel-core
+  namespace: sentinel
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - sentinel
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sentinel-core
+  endpoints:
+    - port: metrics
+      path: /metrics

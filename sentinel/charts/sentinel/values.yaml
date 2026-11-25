@@ -1,0 +1,26 @@
+image:
+  repository: sentinel
+  tag: test
+  pullPolicy: IfNotPresent
+namespace: sentinel
+core:
+  replicas: 1
+  command: ["python", "-m", "sentinel.core"]
+  ports:
+    httpApi: 8080
+    metrics: 9108
+  persistence:
+    enabled: true
+    size: 2Gi
+    mountPath: /data
+discovery:
+  enabled: true
+  schedule: "*/15 * * * *"
+  command: ["python", "-m", "sentinel.discovery"]
+  scopeMode: explicit_hosts
+  targets: []
+traffic:
+  enabled: true
+  replicas: 1
+  command: ["python", "-m", "sentinel.traffic"]
+  windowSeconds: 5

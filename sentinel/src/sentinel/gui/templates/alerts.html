@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Alertas · Sentinel{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Alertas</h1>
+
+<form method="get" action="/ui/alerts" class="grid gap-2 md:grid-cols-4 mb-6 bg-base-100 p-4 rounded-box shadow" id="alerts-filters">
+  <label class="form-control">
+    <span class="label-text text-sm">asset_id</span>
+    <input class="input input-bordered input-sm" name="asset_id" value="{{ filters.asset_id }}">
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">rule</span>
+    <input class="input input-bordered input-sm" name="rule" value="{{ filters.rule }}">
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">from</span>
+    <input class="input input-bordered input-sm" type="date" name="from" value="{{ filters.from }}">
+  </label>
+  <label class="form-control">
+    <span class="label-text text-sm">to</span>
+    <input class="input input-bordered input-sm" type="date" name="to" value="{{ filters.to }}">
+  </label>
+  <div class="md:col-span-4">
+    <button class="btn btn-sm btn-primary" type="submit">Filtrar</button>
+    <a class="btn btn-sm" href="/api/v1/export?format=csv{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}">Export CSV</a>
+  </div>
+</form>
+
+{% if entries.items | length == 0 %}
+  <div class="alert shadow-sm"><span>Sin alertas para este rango.</span></div>
+{% else %}
+  <div class="overflow-x-auto">
+    <table class="table table-compact w-full" id="alerts-table">
+      <thead>
+        <tr><th>Estado</th><th>Regla</th><th>Detalle</th><th>Activo</th><th>Disparada</th><th>Resuelta</th></tr>
+      </thead>
+      <tbody>
+        {% for e in entries.items %}
+        <tr>
+          <td><span class="badge badge-sm {{ 'badge-state-firing' if e.severity_or_state == 'firing' else 'badge-state-resolved' }}">{{ e.severity_or_state }}</span></td>
+          <td>{{ e.title }}</td>
+          <td class="text-xs">{{ e.detail or "—" }}</td>
+          <td>{% if e.asset_id %}<a class="link" href="/ui/assets/{{ e.asset_id }}">{{ e.asset_id }}</a>{% else %}—{% endif %}</td>
+          <td>{{ e.when }}</td>
+          <td>{{ e.resolved_at or "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+<nav class="flex items-center gap-3 mt-4" id="alerts-pagination">
+  {% if entries.has_prev %}
+    <a class="btn btn-sm" href="?page={{ entries.page - 1 }}&asset_id={{ filters.asset_id }}&rule={{ filters.rule }}&from={{ filters.from }}&to={{ filters.to }}">Anterior</a>
+  {% endif %}
+  <span class="text-sm">Página {{ entries.page }} / {{ entries.pages }} · {{ entries.total }} alertas</span>
+  {% if entries.has_next %}
+    <a class="btn btn-sm" href="?page={{ entries.page + 1 }}&asset_id={{ filters.asset_id }}&rule={{ filters.rule }}&from={{ filters.from }}&to={{ filters.to }}">Siguiente</a>
+  {% endif %}
+</nav>
+{% endblock %}

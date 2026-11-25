@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-core-sa
+  namespace: sentinel
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-discovery-sa
+  namespace: sentinel
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-traffic-sa
+  namespace: sentinel
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sentinel-read-only-role
+  namespace: sentinel
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sentinel-read-only-binding
+  namespace: sentinel
+subjects:
+  - kind: ServiceAccount
+    name: sentinel-core-sa
+    namespace: sentinel
+  - kind: ServiceAccount
+    name: sentinel-discovery-sa
+    namespace: sentinel
+roleRef:
+  kind: Role
+  name: sentinel-read-only-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sentinel-discovery
+  namespace: {{ .Values.namespace }}
+spec:
+  schedule: {{ .Values.discovery.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: discovery
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              command: {{ toJson .Values.discovery.command }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-traffic
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.traffic.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sentinel-traffic
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sentinel-traffic
+    spec:
+      containers:
+        - name: traffic
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: {{ toJson .Values.traffic.command }}
