@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+defaults:
+  run:
+    working-directory: sentinel
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: ruff check
+        run: ruff check .
+      - name: ruff format
+        run: ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Unit + property + integration tests with coverage gate
+        run: >-
+          pytest -q --maxfail=1 tests/unit tests/property tests/integration
+          --cov=sentinel --cov-fail-under=70
+          --cov-report=term-missing
+      - name: Type check
+        run: mypy src/sentinel
+      - name: GUI coverage gate (MNT-01, P8)
+        run: coverage report --include='*/gui/*' --fail-under=70
+      - name: Discovery coverage gate (P11)
+        run: coverage report --include='*/discovery/*' --fail-under=70
+      - name: Traffic coverage gate (U5, P11)
+        run: coverage report --include='*/traffic/*' --fail-under=70
+      - name: Baseline coverage gate (U6, P13)
+        run: coverage report --include='*/baseline/*' --fail-under=70
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build OCI image
+        run: docker build -t sentinel:test .
