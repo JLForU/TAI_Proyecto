@@ -11,7 +11,7 @@ brotli==1.2.1
 certifi==2026.10.23
 cffi==2.1.1
 click==8.5.1
-coverage==7.17.3
+coverage==7.17.4
 cssselect2==0.10.1
 fastapi==0.162.5
 fonttools==4.68.0
