@@ -13,7 +13,7 @@ cffi==2.1.1
 click==8.5.1
 coverage==7.17.3
 cssselect2==0.10.1
-fastapi==0.162.5
+fastapi==0.165.0
 fonttools==4.68.0
 h11==0.16.0
 httpcore==1.0.9
