@@ -30,7 +30,7 @@ pillow==13.0.0
 pluggy==1.7.0
 pycparser==3.12
 pydantic==2.14.3
-pydantic_core==2.50.4
+pydantic_core==2.50.5
 pydyf==0.13.0
 pytest-cov==7.1.0
 pytest==9.2.0
