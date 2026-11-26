@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Discovery · Sentinel{% endblock %}
+{% block page_title %}Discovery{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold mb-4">Discovery</h1>
 
-<div class="card bg-base-100 shadow mb-6 max-w-xl">
-  <div class="card-body">
-    <h2 class="card-title">Descubrir un host</h2>
+<div class="panel mb-6 max-w-xl">
+  <div class="panel-header"><h2>Descubrir un host</h2></div>
+  <div class="panel-body">
     <form method="post" action="/ui/discovery" class="flex gap-2"
           hx-post="/ui/discovery" hx-target="#discovery-panel" hx-swap="innerHTML">
-      <input class="input input-bordered flex-1" name="host" placeholder="192.168.1.10" required>
+      <input class="input input-bordered flex-1 font-mono-data" name="host" placeholder="192.168.1.10" required>
       <button class="btn btn-primary" type="submit">Descubrir</button>
     </form>
-    <p class="text-xs opacity-70">El alcance real (allowlist) lo valida U4 — hasta entonces un host válido puede devolver «fuera de alcance».</p>
+    <p class="text-xs opacity-70 mt-2">El alcance real (allowlist) lo valida U4 — hasta entonces un host válido puede devolver «fuera de alcance».</p>
   </div>
 </div>
 

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ asset.summary.asset_id }} · Sentinel{% endblock %}
+{% block page_title %}{{ asset.summary.hostname or asset.summary.asset_id }}{% endblock %}
 {% block content %}
 <div class="mb-4">
   <a class="link" href="/ui/assets">← Volver al inventario</a>
@@ -13,13 +14,13 @@
 </div>
 
 <div class="grid gap-4 md:grid-cols-2">
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Identidad</h2>
-      <ul class="text-sm">
-        <li><strong>asset_id:</strong> {{ asset.summary.asset_id }}</li>
-        <li><strong>IPs:</strong> {{ asset.summary.ips | join(", ") }}</li>
-        <li><strong>MAC:</strong> {{ asset.summary.mac or "—" }}</li>
+  <div class="panel">
+    <div class="panel-header"><h2>Identidad</h2></div>
+    <div class="panel-body">
+      <ul class="text-sm space-y-1">
+        <li><strong>asset_id:</strong> <span class="id-chip">{{ asset.summary.asset_id }}</span></li>
+        <li><strong>IPs:</strong> <span class="font-mono-data">{{ asset.summary.ips | join(", ") }}</span></li>
+        <li><strong>MAC:</strong> <span class="font-mono-data">{{ asset.summary.mac or "—" }}</span></li>
         <li><strong>Hostname:</strong> {{ asset.summary.hostname or "—" }}</li>
         <li><strong>SO:</strong> {{ asset.summary.os_label }}
           <span class="badge badge-outline badge-sm">{{ asset.summary.provenance_label }}</span></li>
@@ -29,38 +30,42 @@
     </div>
   </div>
 
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Tráfico</h2>
+  <div class="panel">
+    <div class="panel-header"><h2>Tráfico</h2></div>
+    <div class="panel-body">
       {% if asset.traffic.available %}
         <p class="text-sm"><strong>bytes/s máx:</strong> {{ asset.traffic.bytes_per_second_max if asset.traffic.bytes_per_second_max is not none else "sin datos" }}</p>
-        <p class="text-sm"><strong>Ventana:</strong> {{ asset.traffic.window }}</p>
-        <table class="table table-compact text-sm">
-          <thead><tr><th>Par</th><th>bytes/s</th></tr></thead>
-          <tbody>
-            {% for p in asset.traffic.pairs %}
-            <tr><td>{{ p.pair }}</td><td>{{ p.bytes_per_second if p.bytes_per_second is not none else "sin datos" }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <p class="text-sm mb-2"><strong>Ventana:</strong> {{ asset.traffic.window }}</p>
+        <div class="data-table-wrap">
+          <table class="table table-compact text-sm">
+            <thead><tr><th>Par</th><th>bytes/s</th></tr></thead>
+            <tbody>
+              {% for p in asset.traffic.pairs %}
+              <tr><td class="font-mono-data">{{ p.pair }}</td><td>{{ p.bytes_per_second if p.bytes_per_second is not none else "sin datos" }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
         <p class="text-sm opacity-70">sin datos</p>
       {% endif %}
     </div>
   </div>
 
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">ARP</h2>
+  <div class="panel">
+    <div class="panel-header"><h2>ARP</h2></div>
+    <div class="panel-body">
       {% if asset.arp | length > 0 %}
-        <table class="table table-compact text-sm">
-          <thead><tr><th>IP</th><th>MAC</th><th>Observado</th></tr></thead>
-          <tbody>
-            {% for m in asset.arp %}
-            <tr><td>{{ m.ip }}</td><td>{{ m.mac }}</td><td>{{ m.observed_at }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="data-table-wrap">
+          <table class="table table-compact text-sm">
+            <thead><tr><th>IP</th><th>MAC</th><th>Observado</th></tr></thead>
+            <tbody>
+              {% for m in asset.arp %}
+              <tr><td class="font-mono-data">{{ m.ip }}</td><td class="font-mono-data">{{ m.mac }}</td><td class="opacity-80">{{ m.observed_at }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
         <p class="text-sm opacity-70">sin datos</p>
       {% endif %}
@@ -68,18 +73,18 @@
   </div>
 </div>
 
-<div class="card bg-base-100 shadow mt-4">
-  <div class="card-body">
-    <h2 class="card-title">Observaciones ({{ asset.observations | length }})</h2>
+<div class="panel mt-4">
+  <div class="panel-header"><h2>Observaciones ({{ asset.observations | length }})</h2></div>
+  <div class="panel-body">
     {% if asset.observations | length == 0 %}
       <p class="text-sm opacity-70">sin datos</p>
     {% else %}
-      <div class="overflow-x-auto">
+      <div class="data-table-wrap">
         <table class="table table-compact text-sm" id="asset-observations">
           <thead><tr><th>Origen</th><th>Tipo</th><th>Observado</th></tr></thead>
           <tbody>
             {% for o in asset.observations %}
-            <tr><td>{{ o.source }}</td><td>{{ o.kind }}</td><td>{{ o.observed_at }}</td></tr>
+            <tr><td>{{ o.source }}</td><td>{{ o.kind }}</td><td class="opacity-80">{{ o.observed_at }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -88,17 +93,17 @@
   </div>
 </div>
 
-<div class="card bg-base-100 shadow mt-4">
-  <div class="card-body">
-    <h2 class="card-title">Eventos ({{ asset.events | length }})</h2>
+<div class="panel mt-4">
+  <div class="panel-header"><h2>Eventos ({{ asset.events | length }})</h2></div>
+  <div class="panel-body">
     {% if asset.events | length == 0 %}
       <p class="text-sm opacity-70">sin datos</p>
     {% else %}
-      <ul class="timeline list-none">
+      <ul class="list-none">
         {% for e in asset.events %}
-        <li class="timeline-item mb-2">
+        <li class="timeline-item">
           <span class="badge badge-sm badge-severity-{{ e.severity }}">{{ e.severity }}</span>
-          <strong>{{ e.type }}</strong> · {{ e.occurred_at }}
+          <strong>{{ e.type }}</strong> · <span class="opacity-80">{{ e.occurred_at }}</span>
         </li>
         {% endfor %}
       </ul>

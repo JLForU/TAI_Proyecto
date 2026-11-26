@@ -5,15 +5,15 @@
 {% endif %}
 
 {% if run %}
-<div class="card bg-base-100 shadow" id="discovery-status" data-run-id="{{ run.run_id }}" data-status="{{ run.status }}">
-  <div class="card-body">
-    <h2 class="card-title">Estado del ciclo</h2>
+<div class="panel" id="discovery-status" data-run-id="{{ run.run_id }}" data-status="{{ run.status }}">
+  <div class="panel-header"><h2>Estado del ciclo</h2></div>
+  <div class="panel-body">
     <div class="flex items-center gap-3 flex-wrap text-sm">
       <span data-role="badge" class="badge badge-info">{{ run.status }}</span>
-      <span>run: <code>{{ run.run_id }}</code></span>
+      <span>run: <span class="id-chip">{{ run.run_id }}</span></span>
       <span>hosts: <strong data-role="hosts_seen">{{ run.hosts_seen if run.hosts_seen is not none else "—" }}</strong></span>
-      <span>inicio: {{ run.started_at }}</span>
-      <span data-role="finished_at">{{ run.finished_at or "" }}</span>
+      <span>inicio: <span class="opacity-80">{{ run.started_at }}</span></span>
+      <span data-role="finished_at" class="opacity-80">{{ run.finished_at or "" }}</span>
       <span data-role="error" class="text-error">{{ run.error or "" }}</span>
     </div>
     <p data-role="poll-message" class="hidden text-warning text-sm mt-2"></p>

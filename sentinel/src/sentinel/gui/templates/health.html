@@ -1,53 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Salud · Sentinel{% endblock %}
+{% block page_title %}Salud del sistema{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold mb-4">Salud del sistema</h1>
 
-<div class="grid gap-4 md:grid-cols-3" id="health-cards">
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Core</h2>
-      <p>
-        <span class="badge {{ 'badge-success' if health.status == 'up' else 'badge-error' }}" id="health-status">{{ health.status }}</span>
-        {% if not health.db_connected %}<span class="badge badge-error ml-2">db caída</span>{% endif %}
-      </p>
-      <p class="text-sm">uptime: {{ health.uptime_seconds }} s</p>
-      <p class="text-sm">último ingest: {{ health.last_ingest_at or "nunca" }}</p>
-      <p class="text-sm">último ciclo: {{ health.last_cycle_at or "sin ciclos" }}</p>
-    </div>
+<div class="stat-row" id="health-cards">
+  <div class="stat-card">
+    <h2>core</h2>
+    <p>
+      <span class="badge {{ 'badge-success' if health.status == 'up' else 'badge-error' }}" id="health-status">{{ health.status }}</span>
+      {% if not health.db_connected %}<span class="badge badge-error ml-2">db caída</span>{% endif %}
+    </p>
+    <p class="text-sm mt-2">uptime: {{ health.uptime_seconds }} s</p>
+    <p class="text-sm">último ingest: {{ health.last_ingest_at or "nunca" }}</p>
+    <p class="text-sm">último ciclo: {{ health.last_cycle_at or "sin ciclos" }}</p>
   </div>
 
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Conteos</h2>
-      <ul class="text-sm">
-        <li><strong>activos:</strong> {{ health.counts.get("assets", 0) }}</li>
-        <li><strong>eventos:</strong> {{ health.counts.get("events", 0) }}</li>
-        <li><strong>alertas:</strong> {{ health.counts.get("alerts", 0) }}</li>
-      </ul>
-      {% if health.counts.get("assets", 0) == 0 %}
-        <p class="text-sm opacity-70">Aún no hay activos en el inventario — ¿ha corrido el discovery?</p>
-      {% endif %}
-    </div>
+  <div class="stat-card">
+    <h2>conteos</h2>
+    <ul class="text-sm">
+      <li><strong>activos:</strong> {{ health.counts.get("assets", 0) }}</li>
+      <li><strong>eventos:</strong> {{ health.counts.get("events", 0) }}</li>
+      <li><strong>alertas:</strong> {{ health.counts.get("alerts", 0) }}</li>
+    </ul>
+    {% if health.counts.get("assets", 0) == 0 %}
+      <p class="text-sm mt-2 opacity-70">Aún no hay activos en el inventario — ¿ha corrido el discovery?</p>
+    {% endif %}
   </div>
 
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Sensores</h2>
-      {% if health.sensors | length == 0 %}
-        <p class="text-sm opacity-70">Sin sensores con heartbeat aún.</p>
-      {% else %}
-        <ul class="text-sm" id="sensor-heartbeats">
-          {% for s in health.sensors %}
-          <li class="flex items-center gap-2">
-            <span>{{ s.sensor_id }}</span>
+  <div class="stat-card">
+    <h2>sensores</h2>
+    {% if health.sensors | length == 0 %}
+      <p class="text-sm opacity-70">Sin sensores con heartbeat aún.</p>
+    {% else %}
+      <ul id="sensor-heartbeats">
+        {% for s in health.sensors %}
+        <li class="sensor-row text-sm">
+          <span class="font-mono-data">{{ s.sensor_id }}</span>
+          <span class="flex items-center gap-2">
             <span class="text-xs opacity-70">{{ s.last_seen }}</span>
             {% if s.down %}<span class="badge badge-error badge-sm">sensor caído</span>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    </div>
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

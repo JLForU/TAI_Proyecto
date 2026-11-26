@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Inventario · Sentinel{% endblock %}
+{% block page_title %}Inventario de activos{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between mb-4 flex-wrap gap-3">
   <h1 class="text-2xl font-bold">Inventario de activos</h1>
   <form method="get" action="/ui/assets" class="flex gap-2">
     <select name="status" class="select select-bordered select-sm">
@@ -14,11 +15,12 @@
 </div>
 
 {% if page.items | length == 0 %}
-  <div class="alert shadow-sm">
-    <span>Sin activos en el inventario. Aún no se ha observado ningún host en la red.</span>
+  <div class="empty-state">
+    <strong>Sin activos en el inventario</strong>
+    <span>Aún no se ha observado ningún host en la red. Lanza un escaneo desde <a class="link" href="/ui/discovery">Discovery</a> para empezar a poblarlo.</span>
   </div>
 {% else %}
-  <div class="overflow-x-auto">
+  <div class="data-table-wrap">
     <table class="table table-compact w-full" id="assets-table">
       <thead>
         <tr>
@@ -29,9 +31,9 @@
       <tbody>
         {% for row in page.items %}
         <tr data-asset-row>
-          <td><a class="link" href="/ui/assets/{{ row.asset_id }}">{{ row.asset_id }}</a></td>
-          <td>{{ row.ips | join(", ") }}</td>
-          <td>{{ row.mac or "—" }}</td>
+          <td><a class="link id-chip" href="/ui/assets/{{ row.asset_id }}">{{ row.asset_id }}</a></td>
+          <td class="font-mono-data">{{ row.ips | join(", ") }}</td>
+          <td class="font-mono-data">{{ row.mac or "—" }}</td>
           <td>{{ row.hostname or "—" }}</td>
           <td>{{ row.os_label }} <span class="badge badge-outline badge-sm">{{ row.provenance_label }}</span></td>
           <td>
@@ -40,7 +42,7 @@
             </span>
           </td>
           <td>{{ row.sources | join(", ") if row.sources else "—" }}</td>
-          <td>{{ row.last_seen }}</td>
+          <td class="text-sm opacity-80">{{ row.last_seen }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -48,11 +50,11 @@
   </div>
 {% endif %}
 
-<nav class="flex items-center gap-3 mt-4" id="assets-pagination">
+<nav class="pagination-bar" id="assets-pagination">
   {% if page.has_prev %}
     <a class="btn btn-sm" href="/ui/assets?page={{ page.page - 1 }}{% if status %}&status={{ status }}{% endif %}">Anterior</a>
   {% endif %}
-  <span class="text-sm">Página {{ page.page }} / {{ page.pages }} · {{ page.total }} activos</span>
+  <span>Página {{ page.page }} / {{ page.pages }} · {{ page.total }} activos</span>
   {% if page.has_next %}
     <a class="btn btn-sm" href="/ui/assets?page={{ page.page + 1 }}{% if status %}&status={{ status }}{% endif %}">Siguiente</a>
   {% endif %}
