@@ -20,6 +20,7 @@ from sentinel.core.api.schemas import (
     EventOut,
     HealthStatus,
     Page,
+    ResetResult,
 )
 
 from .errors import ApiStatusError, CoreUnavailableError
@@ -72,10 +73,13 @@ class GuiClient:
         *,
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         clean = {k: v for k, v in (params or {}).items() if v is not None}
         try:
-            resp = self._client.request(method, path, params=clean or None, json=json)
+            resp = self._client.request(
+                method, path, params=clean or None, json=json, headers=headers
+            )
         except httpx.HTTPError as exc:
             raise CoreUnavailableError("core api unavailable") from exc
         if resp.status_code >= 400:
@@ -162,6 +166,15 @@ class GuiClient:
 
     def get_discovery_run(self, run_id: str) -> DiscoveryRunStatus:
         return self._get_model(DiscoveryRunStatus, f"/api/v1/discovery/{run_id}")
+
+    def reset_scenario(self, token: str) -> ResetResult:
+        """Borra los datos derivados del escenario (Bearer de ingesta)."""
+        resp = self._request(
+            "POST",
+            "/api/v1/admin/reset",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        return ResetResult.model_validate(resp.json())
 
 
 def _error_body(resp: httpx.Response) -> tuple[str, str | None]:

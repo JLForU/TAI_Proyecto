@@ -22,6 +22,7 @@ __all__ = [
     "IngestResult",
     "ObservationOut",
     "Page",
+    "ResetResult",
 ]
 
 T = TypeVar("T")
@@ -43,6 +44,8 @@ class AssetSummary(_Model):
     mac: str | None = None
     ips: list[str]
     hostname: str | None = None
+    os_name: str | None = None
+    os_provenance: str = "unknown"
     status: Literal["present", "absent"]
     first_seen: str
     last_seen: str
@@ -109,3 +112,10 @@ class DiscoveryRunStatus(_Model):
     finished_at: str | None = None
     hosts_seen: int | None = None
     error: str | None = None
+
+
+class ResetResult(_Model):
+    """Conteo de filas eliminadas por tabla durante un reset de escenario."""
+
+    deleted: dict[str, int] = Field(default_factory=dict)
+    total: int = 0

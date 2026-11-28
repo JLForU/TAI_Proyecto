@@ -2,6 +2,11 @@
 {% block title %}Inventario · Sentinel{% endblock %}
 {% block page_title %}Inventario de activos{% endblock %}
 {% block content %}
+{% if request.query_params.get("reset") == "ok" %}
+<div class="alert alert-success shadow-sm mb-4" id="reset-success">
+  <span>Escenario reseteado: inventario, observaciones, eventos, alertas y discovery están vacíos. Los pods siguen intactos.</span>
+</div>
+{% endif %}
 <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
   <h1 class="text-2xl font-bold">Inventario de activos</h1>
   <form method="get" action="/ui/assets" class="flex gap-2">

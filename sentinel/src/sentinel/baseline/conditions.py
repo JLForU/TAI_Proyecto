@@ -198,6 +198,12 @@ class ConditionService:
         for row in self._alerts.list_firing():
             self._active[str(row["condition_id"])] = dict(row)
 
+    def reset(self) -> None:
+        """Vacía el estado en memoria tras un reset del escenario (datos ya borrados)."""
+        self._states.clear()
+        self._active.clear()
+        self._last_traffic_seen = None
+
     # --- estadística de serie (FR-BASE-01/02, P6) --------------------------
 
     def update_baseline(self, metric_key: str, sample: float, now: datetime) -> BaselineState:

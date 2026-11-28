@@ -69,8 +69,6 @@ class QueryService:
             ev_rows, _ = self._events.list(conn, asset_id=asset_id, limit=100, offset=0)
             return AssetDetail(
                 **self._assets.summary(conn, r),
-                os_name=r["os_name"],
-                os_provenance=r["os_provenance"] or "unknown",
                 recent_observations=[
                     ObservationOut(
                         dedup_key=str(o["dedup_key"]),

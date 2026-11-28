@@ -16,6 +16,7 @@ from ..export.service import ExportService
 from ..health.service import HealthService
 from ..ingestion.service import IngestionService
 from ..query.service import QueryService
+from ..reset.service import ResetService
 
 __all__ = [
     "get_db",
@@ -24,6 +25,7 @@ __all__ = [
     "get_ingestion",
     "get_discovery",
     "get_query",
+    "get_reset",
     "get_settings",
     "require_ingest_token",
 ]
@@ -57,6 +59,10 @@ def get_health(request: Request) -> HealthService:
 
 def get_discovery(request: Request) -> DiscoveryTrigger:
     return request.app.state.discovery
+
+
+def get_reset(request: Request) -> ResetService:
+    return request.app.state.reset
 
 
 def require_ingest_token(

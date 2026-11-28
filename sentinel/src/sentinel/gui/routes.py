@@ -11,7 +11,7 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from sentinel.foundation.errors import ValidationError
 
@@ -304,6 +304,21 @@ async def discovery_post(
     if request.headers.get("hx-request"):
         return _render(request, "discovery_panel.html", ctx)
     return _render(request, "discovery.html", ctx)
+
+
+# --------------------------------------------------------------------------- #
+# Reset del escenario (datos derivados; nunca los pods)
+# --------------------------------------------------------------------------- #
+
+
+@router.post("/reset", response_class=HTMLResponse)
+def reset_scenario(
+    request: Request,
+    client: GuiClient = Depends(get_gui_client),
+) -> Response:
+    token = request.app.state.settings.ingest_token
+    client.reset_scenario(token)
+    return RedirectResponse(url="/ui/assets?reset=ok", status_code=303)
 
 
 # --------------------------------------------------------------------------- #
