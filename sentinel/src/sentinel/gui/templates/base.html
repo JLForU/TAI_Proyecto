@@ -59,6 +59,13 @@
 
       <div class="app-nav-foot">
         <a class="btn btn-sm btn-outline w-full" href="/api/v1/export?format=csv" id="nav-export">Export CSV</a>
+        <form method="post" action="/ui/reset" class="mt-2"
+              onsubmit="return confirm('¿Resetear el escenario? Se borrarán inventario, observaciones, eventos, alertas, baselines y discovery. Los pods y la configuración no se tocan.');">
+          <button class="btn btn-sm btn-error w-full" type="submit" id="nav-reset">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12a8 8 0 1 0 2.3-5.7" stroke-linecap="round"/><path d="M4 4v4.5H8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Resetear escenario
+          </button>
+        </form>
       </div>
     </aside>
 

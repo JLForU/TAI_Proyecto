@@ -10,7 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from sentinel.foundation.models import PortInfo
+from sentinel.foundation.models import OsProvenance, PortInfo
 
 __all__ = [
     "CycleResult",
@@ -51,9 +51,10 @@ class HostFinding(BaseModel):
     ip: str
     mac: str | None = None
     hostname: str | None = None
+    os_name: str | None = None
+    os_provenance: OsProvenance = "unknown"
     ports: list[PortInfo] = Field(default_factory=list)
     method: Method
-
 
 class CycleResult(BaseModel):
     """Resultado de un ciclo (FD §1.4)."""
@@ -145,21 +146,21 @@ def merge_findings(findings: list[HostFinding]) -> list[HostFinding]:
     merged: list[HostFinding] = []
     for ip in sorted(by_ip):
         group = by_ip[ip]
-        best = min(group, key=lambda f: _PRECEDENCE[f.method])
-        mac = next(
-            (f.mac for f in sorted(group, key=lambda f: _PRECEDENCE[f.method]) if f.mac), None
-        )
-        hostname = next(
-            (f.hostname for f in sorted(group, key=lambda f: _PRECEDENCE[f.method]) if f.hostname),
-            None,
-        )
+        ordered = sorted(group, key=lambda f: _PRECEDENCE[f.method])
+        best = ordered[0]
+        mac = next((f.mac for f in ordered if f.mac), None)
+        hostname = next((f.hostname for f in ordered if f.hostname), None)
+        os_finding = next((f for f in ordered if f.os_name), None)
         merged.append(
             HostFinding(
                 ip=ip,
                 mac=mac,
                 hostname=hostname,
+                os_name=os_finding.os_name if os_finding else None,
+                os_provenance=os_finding.os_provenance if os_finding else "unknown",
                 ports=_merge_ports(group),
                 method=best.method,
             )
         )
+
     return merged

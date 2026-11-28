@@ -125,9 +125,19 @@ def build_inventory_section(assets: list[AssetSummary]) -> ReportSection:
         return ReportSection("inventory", "Inventory summary", body)
     present = sum(1 for a in assets if a.status == "present")
     absent = len(assets) - present
-    rows = [[a.ips[0] if a.ips else "", a.mac, a.hostname, a.status, a.last_seen] for a in assets]
+    rows = [
+        [
+            a.ips[0] if a.ips else "",
+            a.mac or "—",
+            a.hostname or "—",
+            a.os_name or "desconocido",
+            a.status,
+            a.last_seen,
+        ]
+        for a in assets
+    ]
     counts = f"Total: {len(assets)} · presentes: {present} · ausentes: {absent}\n\n"
-    table = _table(["IP", "MAC", "Hostname", "Estado", "Last seen"], rows)
+    table = _table(["IP", "MAC", "Hostname", "SO", "Estado", "Last seen"], rows)
     return ReportSection("inventory", "Inventory summary", counts + table)
 
 
@@ -136,8 +146,17 @@ def build_changes_section(events: list[EventOut]) -> ReportSection:
     changes = [e for e in events if e.type in CHANGES_EVENT_TYPES]
     if not changes:
         return ReportSection("changes", "Changes", "Sin cambios de inventario en el rango.")
-    rows = [[e.occurred_at, e.type, e.severity, e.asset_id] for e in changes]
-    table = _table(["Ocurrecido", "Tipo", "Severidad", "Activo"], rows)
+    rows = [
+        [
+            e.occurred_at,
+            e.type,
+            e.severity,
+            e.asset_id,
+            ", ".join(f"{k}={v}" for k, v in sorted((e.details or {}).items())),
+        ]
+        for e in changes
+    ]
+    table = _table(["Ocurrecido", "Tipo", "Severidad", "Activo", "Detalle"], rows)
     return ReportSection("changes", "Changes", table)
 
 

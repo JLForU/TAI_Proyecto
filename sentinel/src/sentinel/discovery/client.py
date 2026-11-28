@@ -39,8 +39,8 @@ def to_observations(
             mac=finding.mac,
             hostname=finding.hostname,
             ports=finding.ports,
-            os_name=None,
-            os_provenance="unknown",
+            os_name=finding.os_name,
+            os_provenance=finding.os_provenance,
             method=finding.method,
         )
         for finding in findings

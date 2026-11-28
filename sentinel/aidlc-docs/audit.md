@@ -2371,3 +2371,9 @@ Aprobado.
 - **Timestamp**: 2026-11-25T05:25:00Z
 - **Phase / Unit**: CONSTRUCTION — U8, U9, U10, U11 (Finalization)
 - **Status**: Completed & verified (`ruff check`, `ruff format --check`, `mypy src/sentinel`, `pytest` 569 passed, 94.97% coverage).
+
+## 2026-11-28T03:55:41Z - Bug fix request: GUI reset button
+**Stage:** Construction — adaptive bug fix (workspace detection + code analysis)
+**User Input:** "Por favor, ayudame a arreglar el botón de reset en la GUI."
+**AI Response:** Workspace detectado (brownfield, proyecto Sentinel ya en CONSTRUCTION). Se analizó la ruta `POST /ui/reset` (`src/sentinel/gui/routes.py:314`), el botón en `base.html:62-68`, `GuiClient.reset_scenario` (`src/sentinel/gui/client.py:170`) y `ResetService` (`src/sentinel/core/reset/service.py`). El camino feliz funciona en TestClient (303 + datos borrados) y la suite de reset/GUI está en verde; no hay test que cubra el botón GUI. Se creó `aidlc-docs/reset-button-questions.md` para clarificar el síntoma observado antes de modificar código.
+**Context:** Requiere clasificación del defecto (síntoma, entorno, alcance) antes de Code Generation.

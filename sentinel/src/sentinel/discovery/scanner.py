@@ -24,7 +24,7 @@ from sentinel.discovery.config import CONNECT_TIMEOUT_S, PING_TIMEOUT_S
 from sentinel.discovery.domain import HostFinding
 from sentinel.foundation.errors import ConfigError, ProbeError
 from sentinel.foundation.logging import get_logger
-from sentinel.foundation.models import MAX_STRING_LEN, PortInfo
+from sentinel.foundation.models import MAX_STRING_LEN, OsProvenance, PortInfo
 
 __all__ = [
     "ALLOWED_NMAP_FLAGS",
@@ -180,7 +180,23 @@ def parse_nmap_xml(xml_text: str) -> list[HostFinding]:
                     confidence="confirmed" if (service or version) else "probable",
                 )
             )
-        findings.append(HostFinding(ip=ip, mac=mac, hostname=hostname, ports=ports, method="nmap"))
+        os_name = None
+        os_provenance: OsProvenance = "unknown"
+        osmatch = host.find("os/osmatch")
+        if osmatch is not None and osmatch.get("name"):
+            os_name = _clip(osmatch.get("name"))
+            os_provenance = "inferred"
+        findings.append(
+            HostFinding(
+                ip=ip,
+                mac=mac,
+                hostname=hostname,
+                os_name=os_name,
+                os_provenance=os_provenance,
+                ports=ports,
+                method="nmap",
+            )
+        )
     return findings
 
 
@@ -387,7 +403,7 @@ def _parse_arp(text: str) -> dict[str, str]:
                 IPv4Address(parts[0])
             except ValueError:
                 continue
-            table[parts[0]] = parts[parts.index("lladdr") + 1]
+            table[parts[0]] = parts[parts.index("lladdr") + 1].strip().lower()
     return table
 
 

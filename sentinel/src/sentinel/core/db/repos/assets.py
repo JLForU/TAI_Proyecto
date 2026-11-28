@@ -144,6 +144,8 @@ class AssetRepository:
             "mac": row["mac"],
             "ips": self.ips_for_asset(conn, row["asset_id"]),
             "hostname": row["hostname"],
+            "os_name": row["os_name"],
+            "os_provenance": row["os_provenance"] or "unknown",
             "status": row["status"],
             "first_seen": row["first_seen"],
             "last_seen": row["last_seen"],

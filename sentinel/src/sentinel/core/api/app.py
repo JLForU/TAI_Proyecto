@@ -33,6 +33,7 @@ from ..ingestion.service import IngestionService
 from ..metrics.collect import ApiRequestCounter, CycleCounter, ObservationCounters, collect
 from ..metrics.server import METRICS_PORT, MetricsServer
 from ..query.service import QueryService
+from ..reset.service import ResetService
 from .errors import register_exception_handlers
 
 if TYPE_CHECKING:  # anotación de ``scope_validator`` sin dependencia runtime
@@ -189,6 +190,7 @@ def create_app(
     app.state.discovery = DiscoveryTrigger(
         db, runner=runner, counter=cycle_counter, scope_validator=scope_validator
     )
+    app.state.reset = ResetService(db)
     app.state.api_counter = api_counter
     app.state.cycle_counter = cycle_counter
     app.state.obs_counters = obs_counters
@@ -200,6 +202,7 @@ def create_app(
         api_counter.inc(str(response.status_code))
         return response
 
+    from .routes_admin import router as admin_router
     from .routes_discovery import router as discovery_router
     from .routes_export import router as export_router
     from .routes_health import router as health_router
@@ -211,6 +214,7 @@ def create_app(
     app.include_router(export_router, prefix="/api/v1")
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(discovery_router, prefix="/api/v1")
+    app.include_router(admin_router, prefix="/api/v1")
     register_exception_handlers(app)
 
     # --- U3 (edición acotada Q10=A): montaje del GUI de operador ---------
